@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudySnap - プライバシーポリシー</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif;
+            line-height: 1.8;
+            color: #1d1d1f;
+            background: #f5f5f7;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 60px 20px 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .header p {
+            font-size: 15px;
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 720px;
+            margin: -20px auto 40px;
+            padding: 0 16px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        .card h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 14px;
+            color: #1d1d1f;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .card h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 16px 0 8px;
+            color: #1d1d1f;
+        }
+        .card p, .card li {
+            font-size: 14px;
+            color: #424245;
+        }
+        .card ul {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+        .card li {
+            margin-bottom: 6px;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 6px;
+            background: #e8e0f0;
+            color: #764ba2;
+        }
+        .highlight {
+            background: #f0edff;
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin: 12px 0;
+            font-size: 14px;
+            color: #4a3d8f;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 13px;
+            color: #86868b;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 13px;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        th {
+            font-weight: 600;
+            color: #1d1d1f;
+            background: #fafafa;
+        }
+        td { color: #424245; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>StudySnap</h1>
+    <p>プライバシーポリシー</p>
+</div>
+
+<div class="container">
+
+    <div class="card">
+        <h2>はじめに</h2>
+        <p>StudySnap（以下「本アプリ」）は、ユーザーの勉強記録をサポートするiOSアプリです。本プライバシーポリシーでは、本アプリが収集・利用・保管するデータについて説明します。</p>
+        <p style="margin-top:8px; font-size:13px; color:#86868b;">最終更新日：2026年3月31日</p>
+    </div>
+
+    <div class="card">
+        <h2>1. 収集する情報</h2>
+
+        <h3>アカウント情報</h3>
+        <p>本アプリでは、以下のいずれかの方法でアカウントを作成できます。</p>
+        <table>
+            <tr><th>サインイン方法</th><th>収集する情報</th></tr>
+            <tr><td>メールアドレス</td><td>メールアドレス、パスワード（Firebase Authが暗号化して管理）</td></tr>
+            <tr><td>Googleアカウント</td><td>メールアドレス、表示名</td></tr>
+            <tr><td>Appleアカウント</td><td>メールアドレス（非公開リレー可）、氏名（任意）</td></tr>
+        </table>
+
+        <h3>プロフィール情報</h3>
+        <ul>
+            <li>表示名（ニックネーム）</li>
+            <li>プロフィール写真（任意）</li>
+        </ul>
+
+        <h3>勉強セッションデータ</h3>
+        <ul>
+            <li>勉強時間・開始／終了時刻</li>
+            <li>教科名</li>
+            <li>振り返りコメント</li>
+            <li>勉強モード（通常・集中など）の設定</li>
+            <li>手動入力した勉強記録（外部学習時間）</li>
+        </ul>
+
+        <h3>写真データ</h3>
+        <ul>
+            <li>勉強中にカメラで自動撮影された写真（ランダムな間隔で撮影）</li>
+            <li>撮影された写真はユーザーが確認・編集した後にアップロードされます</li>
+            <li>写真は圧縮処理（最大800px、JPEG圧縮）を行った上でサーバーに保存されます</li>
+        </ul>
+
+        <h3>グループ・コミュニティデータ</h3>
+        <ul>
+            <li>グループ名・説明文・カバー写真</li>
+            <li>グループメンバーシップ情報</li>
+            <li>チャットメッセージ（定型メッセージのみ）</li>
+            <li>投稿の承認記録</li>
+        </ul>
+
+        <h3>目標データ</h3>
+        <ul>
+            <li>日次・週次の勉強目標（タイトル、目標時間、達成状況）</li>
+        </ul>
+
+        <h3>端末情報</h3>
+        <ul>
+            <li>端末の向き情報（加速度センサー、写真の撮影方向の補正に使用）</li>
+            <li>ローカル通知の設定（リマインダー時刻）</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>2. 端末の権限</h2>
+        <table>
+            <tr><th>権限</th><th>用途</th></tr>
+            <tr><td>カメラ</td><td>勉強中のランダム撮影による勉強証明写真の撮影</td></tr>
+            <tr><td>フォトライブラリ</td><td>勉強セッションの写真の保存</td></tr>
+            <tr><td>通知</td><td>勉強リマインダーの送信（ローカル通知のみ）</td></tr>
+        </table>
+        <p style="margin-top:8px;">すべての権限はユーザーの許可を得てから使用します。許可はiOSの設定からいつでも取り消せます。</p>
+    </div>
+
+    <div class="card">
+        <h2>3. データの利用目的</h2>
+        <ul>
+            <li>勉強記録の保存・表示・統計分析（日次/週次/月次レポート）</li>
+            <li>グループ内での勉強証明写真の共有と相互承認</li>
+            <li>勉強の継続記録（ストリーク）の計算</li>
+            <li>教科別の学習時間集計</li>
+            <li>勉強リマインダーの送信</li>
+            <li>サブスクリプション（StudySnap Pro）の管理</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>4. 利用する外部サービス</h2>
+        <table>
+            <tr><th>サービス</th><th>用途</th><th>データ</th></tr>
+            <tr><td>Firebase Authentication</td><td>ユーザー認証</td><td>認証情報</td></tr>
+            <tr><td>Cloud Firestore</td><td>データ保存</td><td>ユーザー・グループ・セッション・投稿・チャット・目標データ</td></tr>
+            <tr><td>Firebase Storage</td><td>写真保存</td><td>プロフィール写真、勉強証明写真、グループカバー写真</td></tr>
+            <tr><td>Google Sign-In</td><td>Googleアカウント認証</td><td>メールアドレス、表示名</td></tr>
+            <tr><td>RevenueCat</td><td>サブスクリプション管理</td><td>購入情報、サブスクリプション状態</td></tr>
+        </table>
+        <p style="margin-top:8px;">各外部サービスのプライバシーポリシーについては、それぞれのサービスのウェブサイトをご確認ください。</p>
+    </div>
+
+    <div class="card">
+        <h2>5. データの保管と自動削除</h2>
+        <ul>
+            <li>すべてのデータはGoogle Cloud（Firebase）上に暗号化して保管されます</li>
+            <li>チャットメッセージは送信から<strong>14日後</strong>に自動削除されます</li>
+            <li>勉強投稿は作成から<strong>14日後</strong>に期限切れとなり、関連する写真とともに自動削除されます</li>
+            <li>下書きデータは端末にローカル保存され、<strong>24時間後</strong>に自動削除されます</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>6. データの共有</h2>
+        <p>以下の情報は、同じグループに所属するメンバーに表示されます。</p>
+        <ul>
+            <li>表示名、プロフィール写真</li>
+            <li>勉強セッションの投稿（写真、教科、振り返り、勉強時間）</li>
+            <li>チャットメッセージ</li>
+        </ul>
+        <div class="highlight">
+            上記以外の第三者への個人データの販売・提供は一切行いません。法令に基づく場合を除き、ユーザーの同意なくデータを外部に開示することはありません。
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>7. サブスクリプション（アプリ内課金）</h2>
+        <ul>
+            <li>本アプリでは「StudySnap Pro」サブスクリプションを提供しています</li>
+            <li>無料プランでは1日あたりの勉強記録時間に制限があります</li>
+            <li>課金処理はAppleのApp Store経由で行われ、支払い情報は本アプリでは保持しません</li>
+            <li>サブスクリプション管理にはRevenueCatを使用しています</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>8. アカウント削除とデータの消去</h2>
+        <p>ユーザーはアプリ内の設定画面からいつでもアカウントを削除できます。アカウント削除時に以下のすべてのデータが完全に削除されます。</p>
+        <ul>
+            <li>ユーザープロフィール（表示名、プロフィール写真）</li>
+            <li>すべての勉強セッション記録</li>
+            <li>すべての投稿と関連する写真</li>
+            <li>すべてのチャットメッセージ</li>
+            <li>すべての目標データ</li>
+            <li>通知設定</li>
+            <li>所属グループからの退会処理</li>
+        </ul>
+        <div class="highlight">
+            削除されたデータは復元できません。アカウント削除は取り消し不可能です。
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>9. 子どものプライバシー</h2>
+        <p>本アプリは13歳未満の方を対象としていません。13歳未満の方の個人情報を意図的に収集することはありません。13歳未満のお子様が本アプリを使用していることが判明した場合は、速やかにアカウントを削除いたします。</p>
+    </div>
+
+    <div class="card">
+        <h2>10. セキュリティ</h2>
+        <ul>
+            <li>すべての通信はHTTPS（TLS）で暗号化されています</li>
+            <li>パスワードはFirebase Authenticationにより安全にハッシュ化して管理されます</li>
+            <li>Firebaseのセキュリティルールにより、ユーザーは自分のデータのみアクセスできます</li>
+            <li>認証トークンの有効期限管理と自動更新を行っています</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>11. プライバシーポリシーの変更</h2>
+        <p>本ポリシーは、法令の改正やサービス内容の変更に伴い、事前の通知なく改定される場合があります。改定後のポリシーはこのページに掲載した時点で効力を生じます。</p>
+    </div>
+
+    <div class="card">
+        <h2>12. お問い合わせ</h2>
+        <p>プライバシーに関するご質問やお問い合わせは、アプリ内の設定画面またはApp Storeのサポートリンクよりご連絡ください。</p>
+    </div>
+
+</div>
+
+<div class="footer">
+    <p>&copy; 2025 StudySnap. All rights reserved.</p>
+</div>
+
+</body>
+</html>

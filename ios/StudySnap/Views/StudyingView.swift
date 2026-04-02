@@ -1,0 +1,269 @@
+import SwiftUI
+import UIKit
+
+struct StudyingView: View {
+    let cameraService: CameraService
+    let store: StoreViewModel
+    let todayShootingTime: TimeInterval
+    var onFinish: (TimeInterval) -> Void
+
+    private var isPremium: Bool { store.isPremium }
+
+    private var mode: StudyMode { cameraService.selectedMode }
+    private let freeDailyLimit: TimeInterval = 1 * 3600
+
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var elapsedTime: TimeInterval = 0
+    @State private var timer: Timer?
+    @State private var startTime: Date = .now
+    @State private var accumulatedTime: TimeInterval = 0
+    @State private var photoCount: Int = 0
+    @State private var showStopConfirm = false
+    @State private var showPhotoLimitAlert = false
+    @State private var showDailyLimitPaywall = false
+    @State private var showDailyLimitAlert = false
+    @State private var pulseAnimation = false
+    @State private var isPaused = false
+
+    var body: some View {
+        ZStack {
+            VStack(spacing: 0) {
+                Spacer()
+
+                VStack(spacing: 32) {
+                    VStack(spacing: 8) {
+                        Image(systemName: isPaused ? "pause.circle.fill" : "book.and.wrench.fill")
+                            .font(.system(size: 44))
+                            .foregroundStyle(isPaused ? Color.orange : Color.accentColor)
+                            .symbolEffect(.pulse, options: .repeating, isActive: !isPaused)
+                            .contentTransition(.symbolEffect(.replace))
+
+                        Text(isPaused ? "一時停止中" : "勉強中...")
+                            .font(.title3)
+                            .foregroundStyle(isPaused ? .orange : .secondary)
+                            .contentTransition(.numericText())
+                    }
+
+                    Text(formattedTime)
+                        .font(.system(size: 64, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                        .opacity(isPaused ? 0.5 : 1.0)
+
+                    HStack(spacing: 24) {
+                        VStack(spacing: 4) {
+                            Image(systemName: "camera.fill")
+                                .font(.title3)
+                                .foregroundStyle(.secondary)
+                            Text("\(photoCount)")
+                                .font(.title2.bold())
+                            Text("撮影枚数")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+
+                        VStack(spacing: 4) {
+                            Image(systemName: mode.icon)
+                                .font(.title3)
+                                .foregroundStyle(.secondary)
+                            Text(mode.title)
+                                .font(.title3.bold())
+                            Text("モード")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+                    }
+                    .padding(.horizontal)
+                }
+
+                Spacer()
+
+                VStack(spacing: 12) {
+                    Button {
+                        withAnimation(.spring(duration: 0.35)) {
+                            togglePause()
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: isPaused ? "play.fill" : "pause.fill")
+                            Text(isPaused ? "再開" : "一時停止")
+                                .font(.headline)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(isPaused ? .blue : .orange)
+                    .controlSize(.large)
+
+                    Button {
+                        showStopConfirm = true
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "stop.fill")
+                            Text("勉強終了")
+                                .font(.headline)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.red)
+                    .controlSize(.large)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 32)
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+        .onAppear {
+            startTime = .now
+            accumulatedTime = 0
+            pulseAnimation = true
+            startTimer()
+            cameraService.startCapturing(mode: mode)
+            UIApplication.shared.isIdleTimerDisabled = true
+        }
+        .onDisappear {
+            stopTimer()
+            UIApplication.shared.isIdleTimerDisabled = false
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .background || newPhase == .inactive {
+                if !isPaused {
+                    withAnimation(.spring(duration: 0.35)) {
+                        pause()
+                    }
+                }
+            }
+        }
+        .onChange(of: cameraService.capturedPhotos.count) { _, newCount in
+            withAnimation(.spring(duration: 0.3)) {
+                photoCount = newCount
+            }
+        }
+        .onChange(of: cameraService.didReachPhotoLimit) { _, reached in
+            if reached {
+                if !isPaused {
+                    withAnimation(.spring(duration: 0.35)) {
+                        pause()
+                    }
+                }
+                showPhotoLimitAlert = true
+            }
+        }
+        .alert("撮影上限", isPresented: $showPhotoLimitAlert) {
+            Button("OK") {
+                stopStudy()
+            }
+        } message: {
+            Text("一回のセッションでの撮影上限枚数に到達しました。")
+        }
+        .alert("本日の無料勉強時間が終了しました", isPresented: $showDailyLimitAlert) {
+            Button("プランを見る") {
+                showDailyLimitPaywall = true
+            }
+        } message: {
+            Text("無料プランでは1日の勉強時間に制限があります。プレミアムにアップグレードすると無制限に勉強できます。")
+        }
+        .sheet(isPresented: $showDailyLimitPaywall, onDismiss: {
+            if !store.isPremium {
+                stopStudy()
+            } else {
+                withAnimation(.spring(duration: 0.35)) {
+                    resume()
+                }
+            }
+        }) {
+            StudySnapPaywallView(store: store, dailyUsedTime: todayShootingTime + elapsedTime)
+                .interactiveDismissDisabled()
+        }
+        .confirmationDialog("勉強を終了しますか？", isPresented: $showStopConfirm, titleVisibility: .visible) {
+            Button("終了する", role: .destructive) {
+                stopStudy()
+            }
+            Button("キャンセル", role: .cancel) {}
+        }
+    }
+
+    private var formattedTime: String {
+        let total = Int(elapsedTime)
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        let seconds = total % 60
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
+        }
+        return String(format: "%02d:%02d", minutes, seconds)
+    }
+
+    private func startTimer() {
+        startTime = .now
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            withAnimation(.linear(duration: 0.3)) {
+                elapsedTime = accumulatedTime + Date.now.timeIntervalSince(startTime)
+            }
+            if !isPremium {
+                let totalToday = todayShootingTime + elapsedTime
+                if totalToday >= freeDailyLimit {
+                    Task { @MainActor in
+                        if !isPaused {
+                            withAnimation(.spring(duration: 0.35)) {
+                                pause()
+                            }
+                        }
+                        showDailyLimitAlert = true
+                    }
+                }
+            }
+        }
+    }
+
+    private func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    private func togglePause() {
+        if isPaused {
+            resume()
+        } else {
+            pause()
+        }
+    }
+
+    private func pause() {
+        guard !isPaused else { return }
+        isPaused = true
+        accumulatedTime += Date.now.timeIntervalSince(startTime)
+        stopTimer()
+        cameraService.pauseCapturing()
+        UIApplication.shared.isIdleTimerDisabled = false
+    }
+
+    private func resume() {
+        guard isPaused else { return }
+        isPaused = false
+        startTimer()
+        cameraService.resumeCapturing()
+        UIApplication.shared.isIdleTimerDisabled = true
+    }
+
+    private func stopStudy() {
+        let finalTime: TimeInterval
+        if isPaused {
+            finalTime = accumulatedTime
+        } else {
+            finalTime = accumulatedTime + Date.now.timeIntervalSince(startTime)
+        }
+        stopTimer()
+        cameraService.stopCapturing()
+        onFinish(finalTime)
+    }
+}

@@ -1,0 +1,1045 @@
+import SwiftUI
+
+enum TimelineFeedItem: Identifiable {
+    case post(StudyPost)
+    case chat(ChatMessage)
+
+    var id: String {
+        switch self {
+        case .post(let p): return "post_\(p.id)"
+        case .chat(let c): return "chat_\(c.id)"
+        }
+    }
+
+    var date: Date {
+        switch self {
+        case .post(let p): return p.createdAt
+        case .chat(let c): return c.createdAt
+        }
+    }
+}
+
+struct PhotoEditContext: Identifiable {
+    let id = UUID()
+    let duration: TimeInterval
+}
+
+struct TimelineView: View {
+    let dataStore: DataStore
+    var store: StoreViewModel
+    @State private var blockService = BlockService.shared
+    @State private var cameraService = CameraService()
+    @State private var showModeSelection = false
+    @State private var modeConfirmed = false
+    @State private var showSubjectSelection = false
+    @State private var selectedSubject: String = ""
+    @State private var showPreview = false
+    @State private var showStudying = false
+    @State private var photoEditContext: PhotoEditContext?
+    @State private var _pendingDurationForContext: TimeInterval = 0
+    @State private var showGroupDetail = false
+    @State private var showDraftEdit = false
+    @State private var showDraftOverwriteWarning = false
+    @State private var showUploadError = false
+    @State private var showPaywall = false
+    @State private var pendingQuickMessage: QuickMessage?
+    @State private var showSendConfirm = false
+    @State private var showLimitReachedAlert = false
+    @State private var showApprovalError = false
+    @State private var hasInitiallyScrolled = false
+    @State private var needsScrollToBottom = false
+    @State private var isRefreshing = false
+    @State private var refreshCompletedCount: Int = 0
+
+    private enum PendingNavigation {
+        case cameraPreview
+        case studying
+        case photoEdit
+    }
+    @State private var pendingNavigation: PendingNavigation?
+
+    var body: some View {
+        NavigationStack {
+            navigationBody
+        }
+    }
+
+    private var navigationBody: some View {
+        navigationBaseContent
+            .sheet(item: $photoEditContext) { context in
+                photoEditSheet(duration: context.duration)
+            }
+            .sheet(isPresented: $showDraftEdit) {
+                draftEditSheet
+            }
+            .sheet(isPresented: $showPaywall) {
+                StudySnapPaywallView(store: store, dailyUsedTime: dataStore.todayTotalUsedTime)
+            }
+            .alert("投稿に失敗しました", isPresented: $showUploadError) {
+                Button("OK", role: .cancel) { dataStore.uploadError = nil }
+            } message: {
+                Text(dataStore.uploadError ?? "")
+            }
+            .alert("制限中", isPresented: $showLimitReachedAlert) {
+            Button("プランを見る") {
+                showPaywall = true
+            }
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("本日の無料勉強時間を使い切りました。プレミアムにアップグレードすると無制限に勉強できます。")
+        }
+        .alert("承認エラー", isPresented: $showApprovalError) {
+                Button("OK", role: .cancel) { dataStore.approvalError = nil }
+            } message: {
+                Text(dataStore.approvalError ?? "")
+            }
+            .alert("前回の下書きがあります", isPresented: $showDraftOverwriteWarning) {
+                Button("新たに記録する", role: .destructive) {
+                    dataStore.deleteDraft()
+                    proceedStartStudyFlow()
+                }
+                Button("キャンセル", role: .cancel) {}
+            } message: {
+                Text("新たに記録すると前回の下書きは消去されます")
+            }
+            .alert("メッセージを送信", isPresented: $showSendConfirm, presenting: pendingQuickMessage) { quick in
+                Button("送信") {
+                    withAnimation(.spring(duration: 0.35, bounce: 0.3)) {
+                        dataStore.sendChatMessage(quick)
+                    }
+                }
+                Button("キャンセル", role: .cancel) {}
+            } message: { quick in
+                Text("\(quick.rawValue)を送信します。")
+            }
+    }
+
+    private var navigationBaseContent: some View {
+        Group {
+            if dataStore.currentGroup == nil {
+                GroupSearchView(dataStore: dataStore)
+            } else {
+                timelineContent
+            }
+        }
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle(dataStore.currentGroup != nil ? "" : "タイムライン")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if dataStore.currentGroup != nil {
+                ToolbarItem(placement: .principal) {
+                    Button {
+                        showGroupDetail = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(dataStore.currentGroup?.name ?? "タイムライン")
+                                .font(.title3.bold())
+                                .foregroundStyle(.primary)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .sheet(isPresented: $showGroupDetail) {
+            groupDetailSheet
+        }
+        .onChange(of: dataStore.uploadError) { _, newValue in
+            showUploadError = newValue != nil
+        }
+        .onChange(of: dataStore.approvalError) { _, newValue in
+            showApprovalError = newValue != nil
+        }
+        .sheet(isPresented: $showModeSelection, onDismiss: {
+            if modeConfirmed {
+                modeConfirmed = false
+                showSubjectSelection = true
+            }
+        }) {
+            ModeSelectionView(
+                isPresented: $showModeSelection
+            ) { mode in
+                cameraService.selectedMode = mode
+                modeConfirmed = true
+                Task { @MainActor in
+                    showModeSelection = false
+                }
+            }
+        }
+        .sheet(isPresented: $showSubjectSelection, onDismiss: {
+            if pendingNavigation == .cameraPreview {
+                pendingNavigation = nil
+                showPreview = true
+            }
+        }) {
+            SubjectSelectionView(
+                isPresented: $showSubjectSelection
+            ) { subject in
+                selectedSubject = subject
+                pendingNavigation = .cameraPreview
+                showSubjectSelection = false
+            }
+        }
+        .fullScreenCover(isPresented: $showPreview, onDismiss: {
+            if pendingNavigation == .studying {
+                pendingNavigation = nil
+                showStudying = true
+            }
+        }) {
+            CameraPreviewView(
+                cameraService: cameraService,
+                onStart: {
+                    pendingNavigation = .studying
+                    showPreview = false
+                },
+                isPresented: $showPreview
+            )
+        }
+        .fullScreenCover(isPresented: $showStudying, onDismiss: {
+            if pendingNavigation == .photoEdit {
+                let duration = _pendingDurationForContext
+                pendingNavigation = nil
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(50))
+                    photoEditContext = PhotoEditContext(duration: duration)
+                }
+            }
+        }) {
+            StudyingView(
+                cameraService: cameraService,
+                store: store,
+                todayShootingTime: dataStore.todayTotalUsedTime
+            ) { duration in
+                _pendingDurationForContext = duration
+                pendingNavigation = .photoEdit
+                showStudying = false
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var groupDetailSheet: some View {
+        if let group = dataStore.currentGroup {
+            NavigationStack {
+                GroupDetailView(group: group, dataStore: dataStore)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("閉じる") { showGroupDetail = false }
+                        }
+                    }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func photoEditSheet(duration: TimeInterval) -> some View {
+        PhotoEditView(
+            capturedPhotos: cameraService.capturedPhotos,
+            duration: duration,
+            dataStore: dataStore,
+            studyMode: cameraService.selectedMode,
+            onPost: { subject, reflection, photos in
+                dataStore.deleteDraft()
+                postSession(subject: subject, reflection: reflection, photos: photos, duration: duration)
+                photoEditContext = nil
+            },
+            isPresented: Binding(
+                get: { photoEditContext != nil },
+                set: { if !$0 { photoEditContext = nil } }
+            ),
+            initialSubject: selectedSubject
+        )
+        .interactiveDismissDisabled()
+    }
+
+    @ViewBuilder
+    private var draftEditSheet: some View {
+        if let draft = dataStore.loadDraft() {
+            PhotoEditView(
+                capturedPhotos: draft.capturedPhotos,
+                duration: draft.duration,
+                dataStore: dataStore,
+                studyMode: draft.mode,
+                onPost: { subject, reflection, photos in
+                    dataStore.deleteDraft()
+                    postDraftSession(subject: subject, reflection: reflection, photos: photos, draft: draft)
+                    showDraftEdit = false
+                },
+                isPresented: $showDraftEdit,
+                initialSubject: draft.subject,
+                initialReflection: draft.reflection,
+                initialEditedPhotos: draft.editedPhotos,
+                initialEditablePhotos: draft.editablePhotos
+            )
+            .interactiveDismissDisabled()
+        }
+    }
+
+    private var mergedFeedItems: [TimelineFeedItem] {
+        let blocked = blockService.blockedUserIds
+        let postItems = dataStore.timelinePosts
+            .filter { !blocked.contains($0.userId) }
+            .map { TimelineFeedItem.post($0) }
+        let chatItems = dataStore.chatMessages
+            .filter { !blocked.contains($0.userId) }
+            .map { TimelineFeedItem.chat($0) }
+        return (postItems + chatItems).sorted { $0.date < $1.date }
+    }
+
+    private var timelineContent: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 8) {
+                startStudyCard
+
+                if dataStore.hasDraft {
+                    draftCard
+                }
+            }
+            .padding(.horizontal)
+            .padding(.top, 4)
+            .padding(.bottom, 4)
+
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 16) {
+                        if dataStore.isLoading {
+                            ProgressView("投稿中...")
+                                .padding()
+                        }
+
+                        let items = mergedFeedItems
+                        if items.isEmpty && !dataStore.isLoading {
+                            emptyTimelineView
+                        } else {
+                            ForEach(items, id: \.id) { item in
+                                switch item {
+                                case .post(let post):
+                                    PostCardView(post: post, dataStore: dataStore)
+                                case .chat(let msg):
+                                    ChatMessageRow(message: msg, isMe: msg.userId == dataStore.currentUser?.id)
+                                }
+                            }
+                        }
+
+                        Color.clear.frame(height: 1).id("timeline_bottom")
+
+                        if isRefreshing {
+                            ProgressView()
+                                .padding(.vertical, 12)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 4)
+                    .padding(.bottom, 8)
+                }
+                .onScrollGeometryChange(for: CGFloat.self) { geo in
+                    let maxOffset = geo.contentSize.height - geo.containerSize.height + geo.contentInsets.top + geo.contentInsets.bottom
+                    return geo.contentOffset.y - maxOffset
+                } action: { _, overscroll in
+                    if overscroll > 60 && !isRefreshing {
+                        triggerBottomRefresh()
+                    }
+                }
+                .onAppear {
+                    if !hasInitiallyScrolled {
+                        needsScrollToBottom = true
+                    }
+                }
+                .onChange(of: mergedFeedItems.count) { _, newCount in
+                    if newCount > 0 && needsScrollToBottom {
+                        needsScrollToBottom = false
+                        hasInitiallyScrolled = true
+                        scrollToBottom(proxy: proxy)
+                    }
+                }
+                .onChange(of: needsScrollToBottom) { _, shouldScroll in
+                    if shouldScroll && !mergedFeedItems.isEmpty {
+                        needsScrollToBottom = false
+                        hasInitiallyScrolled = true
+                        scrollToBottom(proxy: proxy)
+                    }
+                }
+                .sensoryFeedback(.impact(weight: .medium), trigger: refreshCompletedCount)
+                .onChange(of: dataStore.currentGroup?.id) { _, _ in
+                    hasInitiallyScrolled = false
+                    needsScrollToBottom = true
+                }
+            }
+
+            quickMessageBar
+        }
+    }
+
+    private func triggerBottomRefresh() {
+        isRefreshing = true
+        Task {
+            await dataStore.refreshTimelineAsync()
+            isRefreshing = false
+            refreshCompletedCount += 1
+        }
+    }
+
+    private func scrollToBottom(proxy: ScrollViewProxy) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation(.easeOut(duration: 0.1)) {
+                proxy.scrollTo("timeline_bottom", anchor: .bottom)
+            }
+        }
+    }
+
+    private var emptyTimelineView: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [.blue.opacity(0.1), .cyan.opacity(0.08)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 120, height: 120)
+
+                Image(systemName: "books.vertical.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.blue, .cyan],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+
+            VStack(spacing: 8) {
+                Text("まだ投稿がありません")
+                    .font(.title3.bold())
+
+                Text("勉強を始めて記録を残しましょう！\nグループメンバーに承認してもらえます")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
+
+            Button {
+                startStudyFlow()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "play.fill")
+                    Text("勉強を始める")
+                        .fontWeight(.semibold)
+                }
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
+        }
+        .padding(.top, 40)
+        .padding(.bottom, 20)
+    }
+
+    private var quickMessageBar: some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 8) {
+                ForEach(QuickMessage.allCases, id: \.rawValue) { quick in
+                    Button {
+                        pendingQuickMessage = quick
+                        showSendConfirm = true
+                    } label: {
+                        Text(quick.rawValue)
+                            .font(.subheadline.weight(.medium))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                            .background(.blue.opacity(0.12), in: Capsule())
+                            .foregroundStyle(.blue)
+                    }
+
+                }
+            }
+            .padding(.vertical, 10)
+        }
+        .contentMargins(.horizontal, 16)
+        .scrollIndicators(.hidden)
+        .background(.bar)
+    }
+
+    private var canStartStudy: Bool {
+        store.canStartStudy(dailyStudyTime: dataStore.todayTotalUsedTime)
+    }
+
+    private var startStudyCard: some View {
+        VStack(spacing: 0) {
+            if canStartStudy {
+                Button {
+                    startStudyFlow()
+                } label: {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.blue, .cyan],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 56, height: 56)
+
+                            Image(systemName: "play.fill")
+                                .font(.title2)
+                                .foregroundStyle(.white)
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("勉強を始める")
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            Text("タップして開始")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(16)
+                    .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+                }
+                .buttonStyle(.plain)
+            } else {
+                VStack(spacing: 12) {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(.systemGray4))
+                                .frame(width: 56, height: 56)
+
+                            Image(systemName: "lock.fill")
+                                .font(.title2)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("今日の無料枠を使い切りました")
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            Text("毎日1時間まで無料で記録できます")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+                    }
+
+                    Button {
+                        showPaywall = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "crown.fill")
+                            Text("Proにアップグレード")
+                                .fontWeight(.semibold)
+                        }
+                        .font(.subheadline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.orange)
+                }
+                .padding(16)
+                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+            }
+        }
+    }
+
+
+
+    private var draftCard: some View {
+        Button {
+            showDraftEdit = true
+        } label: {
+            VStack(spacing: 12) {
+                HStack(spacing: 16) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.orange, .yellow],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 56, height: 56)
+
+                        Image(systemName: "doc.text.fill")
+                            .font(.title2)
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("保存済み下書き")
+                            .font(.headline)
+                            .foregroundStyle(.primary)
+                        if let draft = dataStore.loadDraft() {
+                            Text("\(draft.subject.isEmpty ? "未入力" : draft.subject) - \(draftTimeString(draft.duration))")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "pencil.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.orange)
+                }
+
+                if let draft = dataStore.loadDraft() {
+                    HStack(spacing: 4) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
+                        Text(draftExpiryText(draft.savedAt))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(.orange.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func draftExpiryText(_ savedAt: Date) -> String {
+        let remaining = 86400 - Date.now.timeIntervalSince(savedAt)
+        if remaining <= 0 { return "まもなく期限切れ" }
+        let hours = Int(remaining) / 3600
+        let minutes = (Int(remaining) % 3600) / 60
+        if hours > 0 {
+            return "下書きは保存から24時間で自動削除されます（残り約\(hours)時間\(minutes)分）"
+        }
+        return "下書きは保存から24時間で自動削除されます（残り約\(minutes)分）"
+    }
+
+    private func draftTimeString(_ duration: TimeInterval) -> String {
+        let total = Int(duration)
+        let hours = total / 3600
+        let minutes = (total % 3600) / 60
+        if hours > 0 {
+            return "\(hours)時間\(minutes)分"
+        }
+        return "\(minutes)分"
+    }
+
+    private func startStudyFlow() {
+        if !canStartStudy {
+            showLimitReachedAlert = true
+            return
+        }
+        if dataStore.hasDraft {
+            showDraftOverwriteWarning = true
+            return
+        }
+        proceedStartStudyFlow()
+    }
+
+    private func proceedStartStudyFlow() {
+        modeConfirmed = false
+        pendingNavigation = nil
+        Task {
+            await cameraService.requestPermissionAndSetup()
+        }
+        showModeSelection = true
+    }
+
+    private func postSession(subject: String, reflection: String, photos: [Data], duration: TimeInterval) {
+        var session = StudySession(mode: cameraService.selectedMode, groupId: dataStore.currentGroup?.id)
+        session.endTime = session.startTime.addingTimeInterval(duration)
+        session.subject = subject.isEmpty ? selectedSubject : subject
+        session.reflection = reflection
+        session.ownerUserId = dataStore.currentUser?.id
+        dataStore.saveSession(session)
+        dataStore.createPost(from: session, editedPhotos: photos)
+    }
+
+    private func postDraftSession(subject: String, reflection: String, photos: [Data], draft: DraftData) {
+        var session = StudySession(mode: draft.mode, groupId: dataStore.currentGroup?.id)
+        session.endTime = session.startTime.addingTimeInterval(draft.duration)
+        session.subject = subject
+        session.reflection = reflection
+        session.ownerUserId = dataStore.currentUser?.id
+        dataStore.saveSession(session)
+        dataStore.createPost(from: session, editedPhotos: photos)
+    }
+}
+
+struct ChatMessageRow: View {
+    let message: ChatMessage
+    let isMe: Bool
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 10) {
+            if isMe { Spacer(minLength: 60) }
+
+            if !isMe {
+                ProfileAvatarView(
+                    photoUrl: message.userPhotoUrl,
+                    name: message.userName,
+                    size: 32
+                )
+            }
+
+            VStack(alignment: isMe ? .trailing : .leading, spacing: 3) {
+                if !isMe {
+                    Text(message.userName)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 4)
+                }
+
+                Text(message.message)
+                    .font(.body)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 9)
+                    .background(
+                        isMe
+                            ? AnyShapeStyle(LinearGradient(colors: [.blue, .blue.opacity(0.85)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            : AnyShapeStyle(Color(.secondarySystemGroupedBackground))
+                    )
+                    .foregroundStyle(isMe ? .white : .primary)
+                    .clipShape(.rect(cornerRadius: 18, style: .continuous))
+
+                Text(chatTimeString(message.createdAt))
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 4)
+            }
+
+            if !isMe { Spacer(minLength: 60) }
+        }
+    }
+
+    private func chatTimeString(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ja_JP")
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            formatter.dateFormat = "HH:mm"
+        } else {
+            formatter.dateFormat = "M/d HH:mm"
+        }
+        return formatter.string(from: date)
+    }
+}
+
+struct PostCardView: View {
+    let post: StudyPost
+    let dataStore: DataStore
+
+    private var isOtherUser: Bool {
+        post.userId != dataStore.currentUser?.id
+    }
+
+    private var approvedCount: Int {
+        post.photoApproved.filter { $0 }.count
+    }
+
+    @State private var showDeleteConfirm: Bool = false
+    @State private var showEditSheet: Bool = false
+    @State private var showPhoneVerificationAlert: Bool = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                ProfileAvatarView(
+                    photoUrl: post.userPhotoUrl,
+                    name: post.userName,
+                    size: 40
+                )
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(post.userName)
+                        .font(.headline)
+                    HStack(spacing: 4) {
+                        Image(systemName: "clock")
+                            .font(.caption2)
+                        Text(post.formattedDuration)
+                            .font(.caption)
+                        Text("•")
+                            .font(.caption)
+                        Text(relativeTimeString(from: post.createdAt))
+                            .font(.caption)
+                    }
+                    .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if post.isApproved {
+                    Label("全承認済", systemImage: "checkmark.seal.fill")
+                        .font(.caption.bold())
+                        .foregroundStyle(.green)
+                } else if approvedCount > 0 {
+                    Text("\(approvedCount)/\(post.photoUrls.count)承認")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(.blue, in: Capsule())
+                } else {
+                    Text("未承認")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(.orange, in: Capsule())
+                }
+
+                if !isOtherUser {
+                    Menu {
+                        Button {
+                            showEditSheet = true
+                        } label: {
+                            Label("編集", systemImage: "pencil")
+                        }
+                        Button(role: .destructive) {
+                            showDeleteConfirm = true
+                        } label: {
+                            Label("削除", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.body)
+                            .foregroundStyle(.secondary)
+                            .frame(width: 32, height: 32)
+                            .contentShape(.rect)
+                    }
+                }
+            }
+
+            if !post.photoUrls.isEmpty {
+                ScrollView(.horizontal) {
+                    HStack(spacing: 10) {
+                        ForEach(Array(post.photoUrls.enumerated()), id: \.offset) { index, urlString in
+                            photoCard(at: index, urlString: urlString)
+                        }
+                    }
+                }
+                .contentMargins(.horizontal, 0)
+                .scrollIndicators(.hidden)
+            } else if isOtherUser && !post.isApproved {
+                postApprovalButton
+            }
+
+            if !post.subject.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: "book.fill")
+                        .font(.caption)
+                        .foregroundStyle(.tint)
+                    Text(post.subject)
+                        .font(.subheadline.bold())
+                }
+            }
+
+            if !post.reflection.isEmpty {
+                Text(post.reflection)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(3)
+            }
+        }
+        .padding(16)
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+        .sheet(isPresented: $showEditSheet) {
+            PostEditView(post: post, dataStore: dataStore, isPresented: $showEditSheet)
+                .interactiveDismissDisabled()
+        }
+        .alert("電話番号認証をしてください", isPresented: $showPhoneVerificationAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("※不正防止のため、承認機能のご利用には電話番号認証が必要です。設定画面から認証を行ってください。")
+        }
+        .confirmationDialog("この投稿を削除しますか？", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+            Button("削除する", role: .destructive) {
+                withAnimation {
+                    dataStore.deletePost(post)
+                }
+            }
+            Button("キャンセル", role: .cancel) {}
+        } message: {
+            Text("削除すると元に戻せません。承認済みの勉強時間はそのまま維持されます。")
+        }
+    }
+
+    private func relativeTimeString(from date: Date) -> String {
+        let interval = Date().timeIntervalSince(date)
+        let minutes = Int(interval) / 60
+        if minutes < 1 {
+            return "たった今"
+        } else if minutes < 60 {
+            return "\(minutes)分前"
+        } else if minutes < 1440 {
+            return "\(minutes / 60)時間前"
+        } else {
+            return "\(minutes / 1440)日前"
+        }
+    }
+
+    private var isPhoneVerified: Bool {
+        dataStore.currentUser?.isPhoneVerified == true
+    }
+
+    private var postApprovalButton: some View {
+        Button {
+            guard isPhoneVerified else {
+                showPhoneVerificationAlert = true
+                return
+            }
+            withAnimation(.spring(duration: 0.4)) {
+                dataStore.approvePost(post)
+            }
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "hand.thumbsup.fill")
+                Text("この投稿を承認")
+            }
+            .font(.subheadline.bold())
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.green)
+    }
+
+    @ViewBuilder
+    private func photoCard(at index: Int, urlString: String) -> some View {
+        let isPhotoApproved = index < post.photoApproved.count && post.photoApproved[index]
+        let approverName = index < post.photoApprovedByNames.count ? post.photoApprovedByNames[index] : ""
+
+        PostPhotoCardView(
+            urlString: urlString,
+            isPhotoApproved: isPhotoApproved,
+            approverName: approverName,
+            isOtherUser: isOtherUser,
+            isPhoneVerified: isPhoneVerified,
+            onApprove: {
+                withAnimation(.spring(duration: 0.4)) {
+                    dataStore.approvePhoto(in: post, at: index)
+                }
+            },
+            onPhoneVerificationNeeded: {
+                showPhoneVerificationAlert = true
+            }
+        )
+    }
+}
+
+private struct PostPhotoCardView: View {
+    let urlString: String
+    let isPhotoApproved: Bool
+    let approverName: String
+    let isOtherUser: Bool
+    let isPhoneVerified: Bool
+    let onApprove: () -> Void
+    let onPhoneVerificationNeeded: () -> Void
+
+    @State private var imageAspect: CGFloat? = nil
+
+    private let targetArea: CGFloat = 180 * 240
+
+    private var cardWidth: CGFloat {
+        guard let aspect = imageAspect, aspect > 0 else { return 180 }
+        let w = sqrt(targetArea * aspect)
+        return min(max(w, 140), 280)
+    }
+
+    private var cardHeight: CGFloat {
+        guard let aspect = imageAspect, aspect > 0 else { return 240 }
+        let h = sqrt(targetArea / aspect)
+        return min(max(h, 140), 280)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Color(.secondarySystemBackground)
+                .frame(width: cardWidth, height: cardHeight)
+                .overlay {
+                    CachedImageView(
+                        url: URL(string: urlString),
+                        contentMode: .fit,
+                        onImageLoaded: { size in
+                            guard size.height > 0 else { return }
+                            let aspect = size.width / size.height
+                            if imageAspect == nil {
+                                withAnimation(.easeOut(duration: 0.2)) {
+                                    imageAspect = aspect
+                                }
+                            }
+                        }
+                    )
+                    .allowsHitTesting(false)
+                }
+                .clipShape(.rect(cornerRadius: 12, style: .continuous))
+                .overlay(alignment: .topTrailing) {
+                    if isPhotoApproved {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.white, .green)
+                            .shadow(radius: 2)
+                            .padding(6)
+                    }
+                }
+
+            if isPhotoApproved {
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.green)
+                    Text(approverName.isEmpty ? "承認済" : "\(approverName)が承認")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 4)
+            } else if isOtherUser {
+                Button {
+                    guard isPhoneVerified else {
+                        onPhoneVerificationNeeded()
+                        return
+                    }
+                    onApprove()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "hand.thumbsup.fill")
+                        Text("承認")
+                    }
+                    .font(.caption.bold())
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.green)
+                .padding(.top, 6)
+            } else {
+                Text("未承認")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .padding(.top, 4)
+            }
+        }
+    }
+}

@@ -1,0 +1,9 @@
+{
+  "apps": [
+    {
+      "name": "StudySnap",
+      "path": "ios",
+      "framework": "swift"
+    }
+  ]
+}
