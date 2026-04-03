@@ -712,6 +712,22 @@ class DataStore {
             .reduce(0) { $0 + $1.studyMode.averageInterval * Double(max(1, $1.approvedPhotoCount)) }
     }
 
+    var allTimeStudyTime: TimeInterval {
+        sessions
+            .filter { !$0.isExternal && $0.approvedPhotoCount > 0 }
+            .reduce(0) { $0 + $1.studyMode.averageInterval * Double(max(1, $1.approvedPhotoCount)) }
+    }
+
+    var allTimeExternalStudyTime: TimeInterval {
+        sessions
+            .filter { $0.isExternal }
+            .reduce(0) { $0 + Double($1.externalMinutes) * 60 }
+    }
+
+    var allTimeTotalStudyTime: TimeInterval {
+        allTimeStudyTime + allTimeExternalStudyTime
+    }
+
     var unapprovedPostsCount: Int {
         guard let user = currentUser else { return 0 }
         return timelinePosts.filter { !$0.isApproved && $0.userId != user.id }.count

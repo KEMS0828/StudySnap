@@ -371,7 +371,7 @@ struct SettingsView: View {
 
                 Section {
                     LabeledContent("累計勉強時間") {
-                        Text(formatDuration(dataStore.currentUser?.totalStudyTime ?? 0))
+                        Text(formatDuration(dataStore.allTimeTotalStudyTime))
                             .fontWeight(.semibold)
                     }
                     LabeledContent("セッション数", value: "\(dataStore.sessions.count)")

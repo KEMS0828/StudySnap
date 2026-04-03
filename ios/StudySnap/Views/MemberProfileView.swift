@@ -7,6 +7,7 @@ struct MemberProfileView: View {
     @State private var blockService = BlockService.shared
     @State private var showBlockConfirm: Bool = false
     @State private var showUnblockConfirm: Bool = false
+    @State private var memberTotalStudyTime: TimeInterval = 0
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -91,7 +92,7 @@ struct MemberProfileView: View {
                         .font(.headline)
 
                     VStack(spacing: 0) {
-                        infoRow(icon: "clock.fill", label: "累計勉強時間", value: formatDuration(member.totalStudyTime))
+                        infoRow(icon: "clock.fill", label: "累計勉強時間", value: formatDuration(memberTotalStudyTime))
                         Divider().padding(.leading, 44)
                         infoRow(icon: "calendar", label: "参加日", value: member.createdAt.formatted(.dateTime.year().month().day()))
                     }
@@ -166,6 +167,16 @@ struct MemberProfileView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("プロフィール")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            let sessions = await dataStore.fetchSessionsForMember(member.id)
+            let appTime = sessions
+                .filter { !$0.isExternal && $0.approvedPhotoCount > 0 }
+                .reduce(0) { $0 + $1.studyMode.averageInterval * Double(max(1, $1.approvedPhotoCount)) }
+            let externalTime = sessions
+                .filter { $0.isExternal }
+                .reduce(0) { $0 + Double($1.externalMinutes) * 60 }
+            memberTotalStudyTime = appTime + externalTime
+        }
         .confirmationDialog("このユーザーをブロックしますか？", isPresented: $showBlockConfirm, titleVisibility: .visible) {
             Button("ブロックする", role: .destructive) {
                 withAnimation {
