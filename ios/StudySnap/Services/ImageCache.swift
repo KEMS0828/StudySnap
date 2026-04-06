@@ -9,7 +9,8 @@ nonisolated final class ImageCache: Sendable {
     private let maxDiskAge: TimeInterval = 7 * 24 * 60 * 60
 
     private init() {
-        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
         diskCacheURL = caches.appendingPathComponent("ImageCache", isDirectory: true)
         try? FileManager.default.createDirectory(at: diskCacheURL, withIntermediateDirectories: true)
         memoryCache.countLimit = 80

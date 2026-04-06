@@ -3,7 +3,7 @@ import FirebaseFirestore
 import FirebaseStorage
 import FirebaseAuth
 
-class CloudService {
+nonisolated class CloudService: @unchecked Sendable {
     private let db = Firestore.firestore()
     private let storage = Storage.storage()
 

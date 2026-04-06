@@ -9,7 +9,7 @@ nonisolated enum QuickMessage: String, CaseIterable, Sendable {
     case cheer = "応援してる💪"
 }
 
-struct ChatMessage: Identifiable, Sendable {
+nonisolated struct ChatMessage: Identifiable, Sendable {
     var id: String
     var groupId: String
     var userId: String

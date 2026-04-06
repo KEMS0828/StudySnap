@@ -24,7 +24,7 @@ nonisolated enum Occupation: String, Codable, Sendable, CaseIterable {
     case working = "社会人"
 }
 
-struct UserProfile: Identifiable, Sendable {
+nonisolated struct UserProfile: Identifiable, Sendable {
     var id: String
     var name: String
     var ageGroup: String?

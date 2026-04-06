@@ -1,6 +1,6 @@
 import Foundation
 
-struct StudyGroup: Identifiable, Sendable {
+nonisolated struct StudyGroup: Identifiable, Sendable {
     var id: String
     var name: String
     var groupDescription: String

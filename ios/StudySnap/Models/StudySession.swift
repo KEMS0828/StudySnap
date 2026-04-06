@@ -1,6 +1,6 @@
 import Foundation
 
-struct StudySession: Identifiable, Sendable {
+nonisolated struct StudySession: Identifiable, Sendable {
     var id: String
     var startTime: Date
     var endTime: Date?
