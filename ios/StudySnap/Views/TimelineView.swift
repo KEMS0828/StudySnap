@@ -478,7 +478,7 @@ struct TimelineView: View {
                 Button {
                     startStudyFlow()
                 } label: {
-                    HStack(spacing: 16) {
+                    HStack(spacing: 12) {
                         ZStack {
                             Circle()
                                 .fill(
@@ -488,53 +488,44 @@ struct TimelineView: View {
                                         endPoint: .bottomTrailing
                                     )
                                 )
-                                .frame(width: 56, height: 56)
+                                .frame(width: 36, height: 36)
 
                             Image(systemName: "play.fill")
-                                .font(.title2)
+                                .font(.subheadline)
                                 .foregroundStyle(.white)
                         }
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("勉強を始める")
-                                .font(.headline)
-                                .foregroundStyle(.primary)
-                            Text("タップして開始")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
+                        Text("勉強を始める")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
 
                         Spacer()
 
                         Image(systemName: "chevron.right")
-                            .font(.subheadline.bold())
+                            .font(.caption.bold())
                             .foregroundStyle(.tertiary)
                     }
-                    .padding(16)
-                    .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
                 }
                 .buttonStyle(.plain)
             } else {
-                VStack(spacing: 12) {
-                    HStack(spacing: 16) {
+                VStack(spacing: 8) {
+                    HStack(spacing: 12) {
                         ZStack {
                             Circle()
                                 .fill(Color(.systemGray4))
-                                .frame(width: 56, height: 56)
+                                .frame(width: 36, height: 36)
 
                             Image(systemName: "lock.fill")
-                                .font(.title2)
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("今日の無料枠を使い切りました")
-                                .font(.headline)
-                                .foregroundStyle(.primary)
-                            Text("毎日1時間まで無料で記録できます")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                        Text("今日の無料枠を使い切りました")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
 
                         Spacer()
                     }
@@ -547,15 +538,16 @@ struct TimelineView: View {
                             Text("Proにアップグレード")
                                 .fontWeight(.semibold)
                         }
-                        .font(.subheadline)
+                        .font(.caption)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 8)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.orange)
                 }
-                .padding(16)
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
             }
         }
     }
@@ -566,8 +558,8 @@ struct TimelineView: View {
         Button {
             showDraftEdit = true
         } label: {
-            VStack(spacing: 12) {
-                HStack(spacing: 16) {
+            VStack(spacing: 6) {
+                HStack(spacing: 12) {
                     ZStack {
                         Circle()
                             .fill(
@@ -577,20 +569,20 @@ struct TimelineView: View {
                                     endPoint: .bottomTrailing
                                 )
                             )
-                            .frame(width: 56, height: 56)
+                            .frame(width: 36, height: 36)
 
                         Image(systemName: "doc.text.fill")
-                            .font(.title2)
+                            .font(.subheadline)
                             .foregroundStyle(.white)
                     }
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text("保存済み下書き")
-                            .font(.headline)
+                            .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
                         if let draft = dataStore.loadDraft() {
                             Text("\(draft.subject.isEmpty ? "未入力" : draft.subject) - \(draftTimeString(draft.duration))")
-                                .font(.subheadline)
+                                .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }
@@ -599,7 +591,7 @@ struct TimelineView: View {
                     Spacer()
 
                     Image(systemName: "pencil.circle.fill")
-                        .font(.title2)
+                        .font(.body)
                         .foregroundStyle(.orange)
                 }
 
@@ -615,10 +607,11 @@ struct TimelineView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .padding(16)
-            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 14)
                     .stroke(.orange.opacity(0.3), lineWidth: 1)
             )
         }
