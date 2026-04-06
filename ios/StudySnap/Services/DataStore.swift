@@ -1015,7 +1015,7 @@ class DataStore {
 
     var currentStreak: Int {
         let calendar = Calendar.current
-        let studyDates = Set(sessions.filter { $0.isApproved }.map { calendar.startOfDay(for: $0.startTime) })
+        let studyDates = Set(sessions.filter { !$0.isExternal && $0.isApproved }.map { calendar.startOfDay(for: $0.startTime) })
         guard !studyDates.isEmpty else { return 0 }
         var streak = 0
         var checkDate = calendar.startOfDay(for: .now)
@@ -1033,7 +1033,7 @@ class DataStore {
 
     var longestStreak: Int {
         let calendar = Calendar.current
-        let studyDates = Set(sessions.filter { $0.isApproved }.map { calendar.startOfDay(for: $0.startTime) })
+        let studyDates = Set(sessions.filter { !$0.isExternal && $0.isApproved }.map { calendar.startOfDay(for: $0.startTime) })
         guard !studyDates.isEmpty else { return 0 }
         let sorted = studyDates.sorted()
         var maxStreak = 1

@@ -415,7 +415,7 @@ struct MemberReportView: View {
 
     private var weeklyChartCard: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("今週の勉強時間")
+            Text("1週間の勉強時間")
                 .font(.headline)
 
             Group {
@@ -665,7 +665,7 @@ struct MemberReportView: View {
 
     private var memberStreak: Int {
         let calendar = Calendar.current
-        let studyDates = Set(sessions.filter { $0.isApproved }.map { calendar.startOfDay(for: $0.startTime) })
+        let studyDates = Set(sessions.filter { !$0.isExternal && $0.isApproved }.map { calendar.startOfDay(for: $0.startTime) })
         guard !studyDates.isEmpty else { return 0 }
         var streak = 0
         var checkDate = calendar.startOfDay(for: .now)

@@ -419,7 +419,7 @@ struct ReportView: View {
 
     private var weeklyChart: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("今週の勉強時間")
+            Text("1週間の勉強時間")
                 .font(.headline)
 
             Group {
