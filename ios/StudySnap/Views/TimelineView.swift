@@ -36,7 +36,7 @@ struct TimelineView: View {
     @State private var showPreview = false
     @State private var showStudying = false
     @State private var photoEditContext: PhotoEditContext?
-    @State private var _pendingDurationForContext: TimeInterval = 0
+    @State private var pendingDurationForContext: TimeInterval = 0
     @State private var showGroupDetail = false
     @State private var showDraftEdit = false
     @State private var showDraftOverwriteWarning = false
@@ -200,7 +200,7 @@ struct TimelineView: View {
         }
         .fullScreenCover(isPresented: $showStudying, onDismiss: {
             if pendingNavigation == .photoEdit {
-                let duration = _pendingDurationForContext
+                let duration = pendingDurationForContext
                 pendingNavigation = nil
                 Task { @MainActor in
                     try? await Task.sleep(for: .milliseconds(50))
@@ -213,7 +213,7 @@ struct TimelineView: View {
                 store: store,
                 todayShootingTime: dataStore.todayTotalUsedTime
             ) { duration in
-                _pendingDurationForContext = duration
+                pendingDurationForContext = duration
                 pendingNavigation = .photoEdit
                 showStudying = false
             }
@@ -555,7 +555,8 @@ struct TimelineView: View {
 
 
     private var draftCard: some View {
-        Button {
+        let draft = dataStore.loadDraft()
+        return Button {
             showDraftEdit = true
         } label: {
             VStack(spacing: 6) {
@@ -580,7 +581,7 @@ struct TimelineView: View {
                         Text("保存済み下書き")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
-                        if let draft = dataStore.loadDraft() {
+                        if let draft {
                             Text("\(draft.subject.isEmpty ? "未入力" : draft.subject) - \(draftTimeString(draft.duration))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -595,7 +596,7 @@ struct TimelineView: View {
                         .foregroundStyle(.orange)
                 }
 
-                if let draft = dataStore.loadDraft() {
+                if let draft {
                     HStack(spacing: 4) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.caption2)
@@ -727,16 +728,26 @@ struct ChatMessageRow: View {
         }
     }
 
+    private static let todayTimeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ja_JP")
+        f.dateFormat = "HH:mm"
+        return f
+    }()
+
+    private static let otherDayTimeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ja_JP")
+        f.dateFormat = "M/d HH:mm"
+        return f
+    }()
+
     private func chatTimeString(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ja_JP")
-        let calendar = Calendar.current
-        if calendar.isDateInToday(date) {
-            formatter.dateFormat = "HH:mm"
+        if Calendar.current.isDateInToday(date) {
+            return Self.todayTimeFormatter.string(from: date)
         } else {
-            formatter.dateFormat = "M/d HH:mm"
+            return Self.otherDayTimeFormatter.string(from: date)
         }
-        return formatter.string(from: date)
     }
 }
 

@@ -76,6 +76,14 @@ struct ContentView: View {
                 dataStore.refreshTimeline()
             }
         }
+        .alert("エラー", isPresented: Binding(
+            get: { dataStore.generalError != nil },
+            set: { if !$0 { dataStore.generalError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(dataStore.generalError ?? "")
+        }
     }
 
     private var splashView: some View {

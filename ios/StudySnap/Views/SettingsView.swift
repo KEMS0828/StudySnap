@@ -781,7 +781,7 @@ struct TransferAdminView: View {
             .navigationBarTitleDisplayMode(.inline)
             .task {
                 let otherIds = dataStore.currentGroup?.memberIds.filter { $0 != dataStore.currentUser?.id } ?? []
-                let fetched = (try? await CloudService().getUsers(authUserIds: otherIds)) ?? []
+                let fetched = (try? await dataStore.fetchUsers(ids: otherIds)) ?? []
                 var dict: [String: UserProfile] = [:]
                 for user in fetched {
                     dict[user.id] = user

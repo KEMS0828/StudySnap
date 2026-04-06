@@ -287,7 +287,11 @@ class AuthenticationService {
     func signInWithApple() {
         isLoading = true
         errorMessage = nil
-        let nonce = randomNonceString()
+        guard let nonce = randomNonceString() else {
+            errorMessage = "セキュリティトークンの生成に失敗しました。もう一度お試しください。"
+            isLoading = false
+            return
+        }
         currentNonce = nonce
         let request = ASAuthorizationAppleIDProvider().createRequest()
         request.requestedScopes = [.fullName, .email]
@@ -384,12 +388,12 @@ class AuthenticationService {
         }
     }
 
-    private func randomNonceString(length: Int = 32) -> String {
+    private func randomNonceString(length: Int = 32) -> String? {
         precondition(length > 0)
         var randomBytes = [UInt8](repeating: 0, count: length)
         let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
-        if errorCode != errSecSuccess {
-            fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+        guard errorCode == errSecSuccess else {
+            return nil
         }
         let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
         return String(randomBytes.map { charset[Int($0) % charset.count] })
@@ -492,7 +496,9 @@ class AuthenticationService {
     }
 
     private func reauthenticateWithApple() async throws {
-        let nonce = randomNonceString()
+        guard let nonce = randomNonceString() else {
+            throw NSError(domain: "AuthService", code: -7, userInfo: [NSLocalizedDescriptionKey: "セキュリティトークンの生成に失敗しました"])
+        }
         let hashedNonce = sha256(nonce)
 
         let credential: AuthCredential = try await withCheckedThrowingContinuation { continuation in

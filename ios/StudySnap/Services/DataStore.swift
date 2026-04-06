@@ -148,17 +148,21 @@ class DataStore {
         var group = StudyGroup(name: name, groupDescription: description, adminId: user.id, joinMethod: joinMethod)
 
         Task {
-            if let data = photoData {
-                let url = try? await cloud.uploadPhoto(data, path: "communities/\(group.id)/cover/photo.jpg")
-                group.groupPhotoUrl = url
+            do {
+                if let data = photoData {
+                    let url = try? await cloud.uploadPhoto(data, path: "communities/\(group.id)/cover/photo.jpg")
+                    group.groupPhotoUrl = url
+                }
+                try await cloud.saveGroup(group)
+                user.currentGroupId = group.id
+                user.isAdmin = true
+                try await cloud.saveUser(user)
+                currentUser = user
+                currentGroup = group
+                await loadGroups()
+            } catch {
+                generalError = "グループの作成に失敗しました: \(error.localizedDescription)"
             }
-            try? await cloud.saveGroup(group)
-            user.currentGroupId = group.id
-            user.isAdmin = true
-            try? await cloud.saveUser(user)
-            currentUser = user
-            currentGroup = group
-            await loadGroups()
         }
     }
 
@@ -168,6 +172,8 @@ class DataStore {
         guard var user = currentUser else { return }
         var mutableGroup = group
         guard mutableGroup.memberIds.count < DataStore.maxGroupMembers else { return }
+        guard !mutableGroup.memberIds.contains(user.id) else { return }
+        guard !mutableGroup.pendingMemberIds.contains(user.id) else { return }
 
         Task {
             if mutableGroup.method == .free {
@@ -325,12 +331,16 @@ class DataStore {
 
     func saveSession(_ session: StudySession) {
         Task {
-            var mutableSession = session
-            if let user = currentUser {
-                mutableSession.ownerUserId = user.id
+            do {
+                var mutableSession = session
+                if let user = currentUser {
+                    mutableSession.ownerUserId = user.id
+                }
+                try await cloud.saveSession(mutableSession)
+                await loadSessions()
+            } catch {
+                generalError = "セッションの保存に失敗しました: \(error.localizedDescription)"
             }
-            try? await cloud.saveSession(mutableSession)
-            await loadSessions()
         }
     }
 
@@ -356,6 +366,7 @@ class DataStore {
 
     var uploadError: String?
     var approvalError: String?
+    var generalError: String?
 
     func createPost(from session: StudySession, editedPhotos: [Data]) {
         guard let user = currentUser, let group = currentGroup else { return }
@@ -670,14 +681,22 @@ class DataStore {
         goals.insert(goal, at: 0)
 
         Task {
-            try? await cloud.saveGoal(goal)
+            do {
+                try await cloud.saveGoal(goal)
+            } catch {
+                generalError = "目標の保存に失敗しました: \(error.localizedDescription)"
+            }
         }
     }
 
     func deleteGoal(_ goal: StudyGoal) {
         goals.removeAll { $0.id == goal.id }
         Task {
-            try? await cloud.deleteGoal(goal.id)
+            do {
+                try await cloud.deleteGoal(goal.id)
+            } catch {
+                generalError = "目標の削除に失敗しました: \(error.localizedDescription)"
+            }
         }
     }
 
@@ -688,7 +707,11 @@ class DataStore {
         var mutableGoal = goal
         mutableGoal.isCompleted.toggle()
         Task {
-            try? await cloud.saveGoal(mutableGoal)
+            do {
+                try await cloud.saveGoal(mutableGoal)
+            } catch {
+                generalError = "目標の更新に失敗しました: \(error.localizedDescription)"
+            }
         }
     }
 
@@ -1075,15 +1098,18 @@ class DataStore {
                 .filter { $0.isExternal && $0.startTime >= dayStart && $0.startTime < dayEnd }
                 .reduce(0) { $0 + Double($1.externalMinutes) * 60 }
 
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "ja_JP")
-            formatter.dateFormat = "E"
-            let label = formatter.string(from: date)
-
+            let label = DataStore.weekdayFormatter.string(from: date)
             result.append((label, appTotal, externalTotal))
         }
         return result
     }
+
+    private static let weekdayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ja_JP")
+        f.dateFormat = "E"
+        return f
+    }()
 
     private func weeklyStudyTimesFiltered(includeApp: Bool, includeExternal: Bool) -> [(String, TimeInterval)] {
         let calendar = Calendar.current
@@ -1107,11 +1133,7 @@ class DataStore {
                     .reduce(0) { $0 + Double($1.externalMinutes) * 60 }
             }
 
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: "ja_JP")
-            formatter.dateFormat = "E"
-            let label = formatter.string(from: date)
-
+            let label = DataStore.weekdayFormatter.string(from: date)
             result.append((label, dayTotal))
         }
         return result
