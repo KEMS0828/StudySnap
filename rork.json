@@ -1,7 +1,7 @@
 {
   "apps": [
     {
-      "name": "StudySnap",
+      "name": "Study Snap",
       "path": "ios",
       "framework": "swift"
     }
