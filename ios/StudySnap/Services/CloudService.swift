@@ -3,20 +3,9 @@ import FirebaseFirestore
 import FirebaseStorage
 import FirebaseAuth
 
-@Observable
 class CloudService {
-    private var _db: Firestore?
-    private var _storage: Storage?
-
-    private var db: Firestore {
-        if _db == nil { _db = Firestore.firestore() }
-        return _db!
-    }
-
-    private var storage: Storage {
-        if _storage == nil { _storage = Storage.storage() }
-        return _storage!
-    }
+    private let db = Firestore.firestore()
+    private let storage = Storage.storage()
 
     // MARK: - User Profile
 
