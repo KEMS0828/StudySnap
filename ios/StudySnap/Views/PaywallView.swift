@@ -221,7 +221,20 @@ struct StudySnapPaywallView: View {
             .font(.footnote)
             .foregroundStyle(.secondary)
 
-            Text("サブスクリプションは自動更新されます。いつでもキャンセル可能です。")
+            if let pkg = selectedPackage {
+                VStack(spacing: 4) {
+                    Text("\(pkg.storeProduct.localizedTitle) — \(subscriptionPeriodText(for: pkg))")
+                        .font(.caption2.bold())
+                        .foregroundStyle(.secondary)
+                    Text("\(pkg.storeProduct.localizedPriceString) / \(subscriptionPeriodShort(for: pkg))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+            }
+
+            Text("サブスクリプションは自動更新されます。期間終了の24時間前までにキャンセルしない限り自動更新されます。")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
                 .multilineTextAlignment(.center)
@@ -236,11 +249,44 @@ struct StudySnapPaywallView: View {
                 NavigationLink("プライバシーポリシー") {
                     PrivacyPolicyView()
                 }
+                Text("・")
+                    .foregroundStyle(.tertiary)
+                Link("EULA", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
         }
         .padding(.bottom, 24)
+    }
+
+    private func subscriptionPeriodText(for package: Package) -> String {
+        switch package.packageType {
+        case .annual: return "年額自動更新サブスクリプション"
+        case .monthly: return "月額自動更新サブスクリプション"
+        case .weekly: return "週額自動更新サブスクリプション"
+        case .twoMonth: return "2ヶ月自動更新サブスクリプション"
+        case .threeMonth: return "3ヶ月自動更新サブスクリプション"
+        case .sixMonth: return "6ヶ月自動更新サブスクリプション"
+        default:
+            if package.identifier.lowercased().contains("year") { return "年額自動更新サブスクリプション" }
+            if package.identifier.lowercased().contains("month") { return "月額自動更新サブスクリプション" }
+            return "自動更新サブスクリプション"
+        }
+    }
+
+    private func subscriptionPeriodShort(for package: Package) -> String {
+        switch package.packageType {
+        case .annual: return "年"
+        case .monthly: return "月"
+        case .weekly: return "週"
+        case .twoMonth: return "2ヶ月"
+        case .threeMonth: return "3ヶ月"
+        case .sixMonth: return "6ヶ月"
+        default:
+            if package.identifier.lowercased().contains("year") { return "年" }
+            if package.identifier.lowercased().contains("month") { return "月" }
+            return "期間"
+        }
     }
 }
 
@@ -312,6 +358,10 @@ private struct PackageCard: View {
                         }
                     }
 
+                    Text(periodLabel)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
                     if isYearly, let monthlyPrice = monthlyEquivalent {
                         Text("月あたり \(monthlyPrice)")
                             .font(.caption)
@@ -336,6 +386,21 @@ private struct PackageCard: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    private var periodLabel: String {
+        switch package.packageType {
+        case .annual: return "1年間 ・ 自動更新"
+        case .monthly: return "1ヶ月間 ・ 自動更新"
+        case .weekly: return "1週間 ・ 自動更新"
+        case .twoMonth: return "2ヶ月間 ・ 自動更新"
+        case .threeMonth: return "3ヶ月間 ・ 自動更新"
+        case .sixMonth: return "6ヶ月間 ・ 自動更新"
+        default:
+            if package.identifier.lowercased().contains("year") { return "1年間 ・ 自動更新" }
+            if package.identifier.lowercased().contains("month") { return "1ヶ月間 ・ 自動更新" }
+            return "自動更新"
+        }
     }
 
     private var monthlyEquivalent: String? {

@@ -4,8 +4,8 @@ import FirebaseStorage
 import FirebaseAuth
 
 nonisolated class CloudService: @unchecked Sendable {
-    private let db = Firestore.firestore()
-    private let storage = Storage.storage()
+    private lazy var db: Firestore = Firestore.firestore()
+    private lazy var storage: Storage = Storage.storage()
 
     // MARK: - User Profile
 

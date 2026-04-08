@@ -59,13 +59,17 @@ class DataStore {
         BlockService.shared.configure(for: authUserId)
         cleanupExpiredDraft()
         Task {
-            await loadUser(authUserId: authUserId, displayName: displayName)
-            await loadGroups()
-            await cleanupExpiredPosts()
-            await loadPosts()
-            await loadSessions()
-            await loadGoals()
-            await loadChatMessages()
+            do {
+                await loadUser(authUserId: authUserId, displayName: displayName)
+                await loadGroups()
+                await cleanupExpiredPosts()
+                await loadPosts()
+                await loadSessions()
+                await loadGoals()
+                await loadChatMessages()
+            } catch {
+                print("[DataStore] configure error: \(error)")
+            }
         }
     }
 

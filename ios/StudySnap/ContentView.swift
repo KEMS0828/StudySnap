@@ -53,6 +53,7 @@ struct ContentView: View {
                 displayName: credentials.displayName
             )
             isConfigured = true
+            store.startIfNeeded()
         }
         .onChange(of: authService.isAuthenticated) { _, newValue in
             if !newValue {

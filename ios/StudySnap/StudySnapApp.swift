@@ -14,6 +14,14 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         Auth.auth().settings?.isAppVerificationDisabledForTesting = true
         #endif
 
+        let rcKey = Config.allValues["EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"] ?? Config.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY
+        if !rcKey.isEmpty && !Purchases.isConfigured {
+            #if DEBUG
+            Purchases.logLevel = .debug
+            #endif
+            Purchases.configure(withAPIKey: rcKey)
+        }
+
         Task { @MainActor in
             UNUserNotificationCenter.current().delegate = self
             application.registerForRemoteNotifications()
@@ -60,13 +68,6 @@ struct StudySnapApp: App {
     @AppStorage("appTheme") private var appTheme: AppTheme = .light
 
     init() {
-        #if DEBUG
-        Purchases.logLevel = .debug
-        #endif
-        let rcKey = Config.allValues["EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"] ?? Config.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY
-        if !rcKey.isEmpty {
-            Purchases.configure(withAPIKey: rcKey)
-        }
     }
 
     var body: some Scene {

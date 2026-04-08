@@ -17,19 +17,34 @@ class StoreViewModel {
     private let entitlementID = "StudySnap Pro"
     let freeDailyLimit: TimeInterval = 1 * 3600
 
+    private var hasStarted = false
+
     init() {
+        refreshConfigured()
+    }
+
+    private func refreshConfigured() {
         let rcKey = Config.allValues["EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"] ?? Config.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY
         isConfigured = !rcKey.isEmpty && Purchases.isConfigured
-        if isConfigured {
-            Task { await listenForUpdates() }
-            Task { await fetchOfferings() }
-        }
+    }
+
+    func startIfNeeded() {
+        guard !hasStarted else { return }
+        refreshConfigured()
+        guard isConfigured else { return }
+        hasStarted = true
+        Task { await listenForUpdates() }
+        Task { await fetchOfferings() }
     }
 
     private func listenForUpdates() async {
         guard Purchases.isConfigured else { return }
-        for await info in Purchases.shared.customerInfoStream {
-            updatePremiumStatus(from: info)
+        do {
+            for try await info in Purchases.shared.customerInfoStream {
+                updatePremiumStatus(from: info)
+            }
+        } catch {
+            print("[StoreViewModel] customerInfoStream error: \(error)")
         }
     }
 
