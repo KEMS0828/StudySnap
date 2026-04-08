@@ -63,17 +63,19 @@ class AuthenticationService {
     private func startAuthStateListener() {
         guard FirebaseApp.app() != nil else { return }
         authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-            guard let self else { return }
-            if let user {
-                let credentials = self.credentialsFromFirebaseUser(user)
-                if self.currentCredentials?.userId != credentials.userId || !self.isAuthenticated {
-                    self.currentCredentials = credentials
-                    self.isAuthenticated = true
-                }
-            } else {
-                if self.isAuthenticated {
-                    self.currentCredentials = nil
-                    self.isAuthenticated = false
+            let credentials = user.map { self?.credentialsFromFirebaseUser($0) } ?? nil
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if let credentials {
+                    if self.currentCredentials?.userId != credentials.userId || !self.isAuthenticated {
+                        self.currentCredentials = credentials
+                        self.isAuthenticated = true
+                    }
+                } else {
+                    if self.isAuthenticated {
+                        self.currentCredentials = nil
+                        self.isAuthenticated = false
+                    }
                 }
             }
         }
@@ -131,32 +133,32 @@ class AuthenticationService {
         }
 
         GIDSignIn.sharedInstance.signIn(withPresenting: rootViewController) { [weak self] result, error in
-            guard let self else { return }
+            Task { @MainActor [weak self] in
+                guard let self else { return }
 
-            if let error {
-                let nsError = error as NSError
-                if nsError.code == GIDSignInError.canceled.rawValue {
+                if let error {
+                    let nsError = error as NSError
+                    if nsError.code == GIDSignInError.canceled.rawValue {
+                        self.isLoading = false
+                        return
+                    }
+                    self.errorMessage = "Googleサインインに失敗しました"
                     self.isLoading = false
                     return
                 }
-                self.errorMessage = "Googleサインインに失敗しました"
-                self.isLoading = false
-                return
-            }
 
-            guard let user = result?.user,
-                  let idToken = user.idToken?.tokenString else {
-                self.errorMessage = "Googleサインインに失敗しました"
-                self.isLoading = false
-                return
-            }
+                guard let user = result?.user,
+                      let idToken = user.idToken?.tokenString else {
+                    self.errorMessage = "Googleサインインに失敗しました"
+                    self.isLoading = false
+                    return
+                }
 
-            let credential = GoogleAuthProvider.credential(
-                withIDToken: idToken,
-                accessToken: user.accessToken.tokenString
-            )
+                let credential = GoogleAuthProvider.credential(
+                    withIDToken: idToken,
+                    accessToken: user.accessToken.tokenString
+                )
 
-            Task {
                 do {
                     let authResult = try await Auth.auth().signIn(with: credential)
                     let credentials = AuthCredentials(
@@ -298,20 +300,22 @@ class AuthenticationService {
         request.nonce = sha256(nonce)
         let controller = ASAuthorizationController(authorizationRequests: [request])
         let delegate = AppleSignInDelegate { [weak self] result in
-            guard let self else { return }
-            switch result {
-            case .success(let authorization):
-                self.handleAppleAuthorization(authorization)
-            case .failure(let error):
-                let nsError = error as NSError
-                if nsError.domain == ASAuthorizationError.errorDomain,
-                   nsError.code == ASAuthorizationError.canceled.rawValue {
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                switch result {
+                case .success(let authorization):
+                    self.handleAppleAuthorization(authorization)
+                case .failure(let error):
+                    let nsError = error as NSError
+                    if nsError.domain == ASAuthorizationError.errorDomain,
+                       nsError.code == ASAuthorizationError.canceled.rawValue {
+                        self.isLoading = false
+                        return
+                    }
+                    print("[AppleSignIn] ASAuthorization error: \(error.localizedDescription) (domain: \(nsError.domain), code: \(nsError.code))")
+                    self.errorMessage = "Appleサインインに失敗しました: \(error.localizedDescription)"
                     self.isLoading = false
-                    return
                 }
-                print("[AppleSignIn] ASAuthorization error: \(error.localizedDescription) (domain: \(nsError.domain), code: \(nsError.code))")
-                self.errorMessage = "Appleサインインに失敗しました: \(error.localizedDescription)"
-                self.isLoading = false
             }
         }
         controller.delegate = delegate
