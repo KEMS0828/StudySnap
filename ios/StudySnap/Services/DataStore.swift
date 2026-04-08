@@ -1,4 +1,5 @@
 import Foundation
+import FirebaseCore
 import FirebaseFirestore
 
 @Observable
@@ -59,6 +60,10 @@ class DataStore {
         BlockService.shared.configure(for: authUserId)
         cleanupExpiredDraft()
         Task {
+            guard FirebaseApp.app() != nil else {
+                print("[DataStore] Firebase not configured yet, skipping data load")
+                return
+            }
             do {
                 await loadUser(authUserId: authUserId, displayName: displayName)
                 await loadGroups()

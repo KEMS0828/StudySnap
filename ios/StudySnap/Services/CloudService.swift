@@ -1,15 +1,34 @@
 import Foundation
+import FirebaseCore
 import FirebaseFirestore
 import FirebaseStorage
 import FirebaseAuth
 
 nonisolated class CloudService: @unchecked Sendable {
-    private let db: Firestore
-    private let storage: Storage
+    private let lock = NSLock()
+    private var _db: Firestore?
+    private var _storage: Storage?
 
-    init() {
-        self.db = Firestore.firestore()
-        self.storage = Storage.storage()
+    private var db: Firestore {
+        lock.lock()
+        defer { lock.unlock() }
+        if let existing = _db { return existing }
+        let instance = Firestore.firestore()
+        _db = instance
+        return instance
+    }
+
+    private var storage: Storage {
+        lock.lock()
+        defer { lock.unlock() }
+        if let existing = _storage { return existing }
+        let instance = Storage.storage()
+        _storage = instance
+        return instance
+    }
+
+    private var isFirebaseReady: Bool {
+        FirebaseApp.app() != nil
     }
 
     // MARK: - User Profile

@@ -368,7 +368,7 @@ class AuthenticationService {
             }
         }
 
-        Task {
+        Task { @MainActor in
             do {
                 let authResult = try await Auth.auth().signIn(with: credential)
                 if let displayName, !displayName.isEmpty {
