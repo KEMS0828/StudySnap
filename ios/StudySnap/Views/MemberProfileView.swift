@@ -4,7 +4,7 @@ struct MemberProfileView: View {
     let member: UserProfile
     let isAdmin: Bool
     let dataStore: DataStore
-    @State private var blockService = BlockService.shared
+    private var blockService: BlockService { BlockService.shared }
     @State private var showBlockConfirm: Bool = false
     @State private var showUnblockConfirm: Bool = false
     @State private var memberTotalStudyTime: TimeInterval = 0

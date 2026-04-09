@@ -2,7 +2,7 @@ import SwiftUI
 
 struct BlockedUsersView: View {
     let dataStore: DataStore
-    @State private var blockService = BlockService.shared
+    private var blockService: BlockService { BlockService.shared }
     @State private var blockedProfiles: [UserProfile] = []
     @State private var isLoading: Bool = true
     @State private var userToUnblock: UserProfile?

@@ -59,22 +59,19 @@ class DataStore {
         self.currentAuthUserId = authUserId
         BlockService.shared.configure(for: authUserId)
         cleanupExpiredDraft()
-        Task {
+        Task { [weak self] in
+            guard let self else { return }
             guard FirebaseApp.app() != nil else {
                 print("[DataStore] Firebase not configured yet, skipping data load")
                 return
             }
-            do {
-                await loadUser(authUserId: authUserId, displayName: displayName)
-                await loadGroups()
-                await cleanupExpiredPosts()
-                await loadPosts()
-                await loadSessions()
-                await loadGoals()
-                await loadChatMessages()
-            } catch {
-                print("[DataStore] configure error: \(error)")
-            }
+            await self.loadUser(authUserId: authUserId, displayName: displayName)
+            await self.loadGroups()
+            await self.cleanupExpiredPosts()
+            await self.loadPosts()
+            await self.loadSessions()
+            await self.loadGoals()
+            await self.loadChatMessages()
         }
     }
 
@@ -431,7 +428,17 @@ class DataStore {
         mutablePost.approvedByUserName = user.name
         mutablePost.approvedAt = .now
 
-        for i in mutablePost.photoApproved.indices {
+        let photoCount = mutablePost.photoUrls.count
+        if mutablePost.photoApproved.count != photoCount {
+            mutablePost.photoApproved = Array(repeating: false, count: photoCount)
+        }
+        if mutablePost.photoApprovedByNames.count != photoCount {
+            mutablePost.photoApprovedByNames = Array(repeating: "", count: photoCount)
+        }
+        if mutablePost.photoApprovedAt.count != photoCount {
+            mutablePost.photoApprovedAt = Array(repeating: 0, count: photoCount)
+        }
+        for i in 0..<photoCount {
             mutablePost.photoApproved[i] = true
             mutablePost.photoApprovedByNames[i] = user.name
             mutablePost.photoApprovedAt[i] = Date.now.timeIntervalSince1970
@@ -485,6 +492,8 @@ class DataStore {
     func approvePhoto(in post: StudyPost, at index: Int) {
         guard let user = currentUser else { return }
         guard index >= 0 && index < post.photoApproved.count else { return }
+        guard index < post.photoApprovedByNames.count else { return }
+        guard index < post.photoApprovedAt.count else { return }
         guard !post.photoApproved[index] else { return }
 
         var mutablePost = post
@@ -547,6 +556,8 @@ class DataStore {
 
     func rejectPhoto(in post: StudyPost, at index: Int) {
         guard index >= 0 && index < post.photoApproved.count else { return }
+        guard index < post.photoApprovedByNames.count else { return }
+        guard index < post.photoApprovedAt.count else { return }
         let wasPhotoApproved = post.photoApproved[index]
 
         var mutablePost = post

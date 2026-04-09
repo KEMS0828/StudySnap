@@ -2,7 +2,7 @@ import SwiftUI
 
 struct GroupChatView: View {
     let dataStore: DataStore
-    @State private var blockService = BlockService.shared
+    private var blockService: BlockService { BlockService.shared }
     @Environment(\.dismiss) private var dismiss
     @State private var lastSentId: String?
 

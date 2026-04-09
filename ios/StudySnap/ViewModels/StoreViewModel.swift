@@ -33,8 +33,8 @@ class StoreViewModel {
         refreshConfigured()
         guard isConfigured else { return }
         hasStarted = true
-        Task { await listenForUpdates() }
-        Task { await fetchOfferings() }
+        Task { [weak self] in await self?.listenForUpdates() }
+        Task { [weak self] in await self?.fetchOfferings() }
     }
 
     private func listenForUpdates() async {
@@ -43,6 +43,7 @@ class StoreViewModel {
             for try await info in Purchases.shared.customerInfoStream {
                 updatePremiumStatus(from: info)
             }
+        } catch is CancellationError {
         } catch {
             print("[StoreViewModel] customerInfoStream error: \(error)")
         }

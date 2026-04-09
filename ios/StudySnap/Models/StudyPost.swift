@@ -105,9 +105,25 @@ nonisolated struct StudyPost: Identifiable, Sendable {
         if let ts = data["approvedAt"] as? TimeInterval {
             post.approvedAt = Date(timeIntervalSince1970: ts)
         }
-        post.photoApproved = data["photoApproved"] as? [Bool] ?? Array(repeating: false, count: post.photoUrls.count)
-        post.photoApprovedByNames = data["photoApprovedByNames"] as? [String] ?? Array(repeating: "", count: post.photoUrls.count)
-        post.photoApprovedAt = data["photoApprovedAt"] as? [Double] ?? Array(repeating: 0, count: post.photoUrls.count)
+        let photoCount = post.photoUrls.count
+        let rawApproved = data["photoApproved"] as? [Bool] ?? Array(repeating: false, count: photoCount)
+        let rawNames = data["photoApprovedByNames"] as? [String] ?? Array(repeating: "", count: photoCount)
+        let rawAt = data["photoApprovedAt"] as? [Double] ?? Array(repeating: 0, count: photoCount)
+        if rawApproved.count == photoCount {
+            post.photoApproved = rawApproved
+        } else {
+            post.photoApproved = (0..<photoCount).map { $0 < rawApproved.count ? rawApproved[$0] : false }
+        }
+        if rawNames.count == photoCount {
+            post.photoApprovedByNames = rawNames
+        } else {
+            post.photoApprovedByNames = (0..<photoCount).map { $0 < rawNames.count ? rawNames[$0] : "" }
+        }
+        if rawAt.count == photoCount {
+            post.photoApprovedAt = rawAt
+        } else {
+            post.photoApprovedAt = (0..<photoCount).map { $0 < rawAt.count ? rawAt[$0] : 0 }
+        }
         post.userPhotoUrl = data["userPhotoUrl"] as? String
         return post
     }

@@ -27,7 +27,7 @@ struct PhotoEditContext: Identifiable {
 struct TimelineView: View {
     let dataStore: DataStore
     var store: StoreViewModel
-    @State private var blockService = BlockService.shared
+    private var blockService: BlockService { BlockService.shared }
     @State private var cameraService = CameraService()
     @State private var showModeSelection = false
     @State private var modeConfirmed = false
