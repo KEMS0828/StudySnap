@@ -63,10 +63,19 @@ class AuthenticationService {
     private func startAuthStateListener() {
         guard FirebaseApp.app() != nil else { return }
         authStateHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-            let credentials = user.map { self?.credentialsFromFirebaseUser($0) } ?? nil
+            let providerData = user?.providerData.map { $0.providerID } ?? []
+            let uid = user?.uid
+            let email = user?.email
+            let displayName = user?.displayName
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                if let credentials {
+                if let uid {
+                    let credentials = Self.buildCredentials(
+                        providerIDs: providerData,
+                        uid: uid,
+                        email: email,
+                        displayName: displayName
+                    )
                     if self.currentCredentials?.userId != credentials.userId || !self.isAuthenticated {
                         self.currentCredentials = credentials
                         self.isAuthenticated = true
@@ -81,18 +90,32 @@ class AuthenticationService {
         }
     }
 
-    private func credentialsFromFirebaseUser(_ firebaseUser: User) -> AuthCredentials {
+    nonisolated private static func buildCredentials(
+        providerIDs: [String],
+        uid: String,
+        email: String?,
+        displayName: String?
+    ) -> AuthCredentials {
         let provider: AuthProvider
-        if firebaseUser.providerData.contains(where: { $0.providerID == "apple.com" }) {
+        if providerIDs.contains("apple.com") {
             provider = .apple
-        } else if firebaseUser.providerData.contains(where: { $0.providerID == "google.com" }) {
+        } else if providerIDs.contains("google.com") {
             provider = .google
         } else {
             provider = .email
         }
         return AuthCredentials(
             provider: provider,
-            userId: firebaseUser.uid,
+            userId: uid,
+            email: email,
+            displayName: displayName
+        )
+    }
+
+    private func credentialsFromFirebaseUser(_ firebaseUser: User) -> AuthCredentials {
+        Self.buildCredentials(
+            providerIDs: firebaseUser.providerData.map { $0.providerID },
+            uid: firebaseUser.uid,
             email: firebaseUser.email,
             displayName: firebaseUser.displayName
         )

@@ -65,13 +65,26 @@ class DataStore {
                 print("[DataStore] Firebase not configured yet, skipping data load")
                 return
             }
-            await self.loadUser(authUserId: authUserId, displayName: displayName)
-            await self.loadGroups()
-            await self.cleanupExpiredPosts()
-            await self.loadPosts()
-            await self.loadSessions()
-            await self.loadGoals()
-            await self.loadChatMessages()
+            do {
+                try Task.checkCancellation()
+                await self.loadUser(authUserId: authUserId, displayName: displayName)
+                try Task.checkCancellation()
+                await self.loadGroups()
+                try Task.checkCancellation()
+                await self.loadPosts()
+                try Task.checkCancellation()
+                await self.loadSessions()
+                try Task.checkCancellation()
+                await self.loadGoals()
+                try Task.checkCancellation()
+                await self.loadChatMessages()
+                try Task.checkCancellation()
+                await self.cleanupExpiredPosts()
+            } catch is CancellationError {
+                print("[DataStore] Initial load cancelled")
+            } catch {
+                print("[DataStore] Initial load error: \(error)")
+            }
         }
     }
 

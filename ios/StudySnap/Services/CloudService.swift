@@ -4,14 +4,11 @@ import FirebaseFirestore
 import FirebaseStorage
 import FirebaseAuth
 
-nonisolated class CloudService: @unchecked Sendable {
-    private let lock = NSLock()
+actor CloudService {
     private var _db: Firestore?
     private var _storage: Storage?
 
     private var db: Firestore {
-        lock.lock()
-        defer { lock.unlock() }
         if let existing = _db { return existing }
         let instance = Firestore.firestore()
         _db = instance
@@ -19,19 +16,11 @@ nonisolated class CloudService: @unchecked Sendable {
     }
 
     private var storage: Storage {
-        lock.lock()
-        defer { lock.unlock() }
         if let existing = _storage { return existing }
         let instance = Storage.storage()
         _storage = instance
         return instance
     }
-
-    private var isFirebaseReady: Bool {
-        FirebaseApp.app() != nil
-    }
-
-    // MARK: - User Profile
 
     func saveUser(_ user: UserProfile) async throws {
         let data = user.toFirestore()
@@ -43,8 +32,6 @@ nonisolated class CloudService: @unchecked Sendable {
         guard doc.exists, let data = doc.data() else { return nil }
         return UserProfile.fromFirestore(data, id: authUserId)
     }
-
-    // MARK: - Groups
 
     func saveGroup(_ group: StudyGroup) async throws {
         let data = group.toFirestore()
@@ -62,8 +49,6 @@ nonisolated class CloudService: @unchecked Sendable {
     func deleteGroup(_ groupId: String) async throws {
         try await db.collection("groups").document(groupId).delete()
     }
-
-    // MARK: - Posts
 
     func savePost(_ post: StudyPost) async throws {
         let data = post.toFirestore()
@@ -100,7 +85,7 @@ nonisolated class CloudService: @unchecked Sendable {
         }
     }
 
-    func firestoreErrorDescription(_ error: Error) -> String {
+    nonisolated func firestoreErrorDescription(_ error: Error) -> String {
         let nsError = error as NSError
         if nsError.domain == "FIRFirestoreErrorDomain" {
             switch nsError.code {
@@ -155,8 +140,6 @@ nonisolated class CloudService: @unchecked Sendable {
         }
     }
 
-    // MARK: - Sessions
-
     func saveSession(_ session: StudySession) async throws {
         let data = session.toFirestore()
         try await db.collection("sessions").document(session.id).setData(data, merge: true)
@@ -181,8 +164,6 @@ nonisolated class CloudService: @unchecked Sendable {
         try await db.collection("sessions").document(sessionId).delete()
     }
 
-    // MARK: - Goals
-
     func saveGoal(_ goal: StudyGoal) async throws {
         let data = goal.toFirestore()
         try await db.collection("goals").document(goal.id).setData(data, merge: true)
@@ -200,8 +181,6 @@ nonisolated class CloudService: @unchecked Sendable {
     func deleteGoal(_ goalId: String) async throws {
         try await db.collection("goals").document(goalId).delete()
     }
-
-    // MARK: - Photo Upload
 
     private func compressPhoto(_ data: Data, maxBytes: Int = 150_000) -> Data {
         guard let image = UIImage(data: data) else { return data }
@@ -315,7 +294,7 @@ nonisolated class CloudService: @unchecked Sendable {
         await withTaskGroup(of: (Int, String?, String?).self) { group in
             for (index, photoData) in indexed {
                 let path = "\(basePath)/\(index)_\(UUID().uuidString).jpg"
-                group.addTask {
+                group.addTask { [self] in
                     do {
                         let url = try await self.uploadPhotoWithRetry(photoData, path: path, skipTokenRefresh: true)
                         return (index, url, nil)
@@ -338,7 +317,7 @@ nonisolated class CloudService: @unchecked Sendable {
         return (urls, failedCount, lastErrorDetail)
     }
 
-    private func storageErrorDescription(_ error: NSError) -> String {
+    private nonisolated func storageErrorDescription(_ error: NSError) -> String {
         if error.domain == StorageErrorDomain {
             switch StorageErrorCode(rawValue: error.code) {
             case .unauthenticated:
@@ -368,8 +347,6 @@ nonisolated class CloudService: @unchecked Sendable {
         try? await ref.delete()
     }
 
-    // MARK: - Approval Methods (using setData merge to avoid permission issues)
-
     func updatePostApprovalFields(_ postId: String, fields: [String: Any]) async throws {
         try await db.collection("posts").document(postId).setData(fields, merge: true)
     }
@@ -386,8 +363,6 @@ nonisolated class CloudService: @unchecked Sendable {
             "totalStudyTime": currentTime + additionalTime
         ], merge: true)
     }
-
-    // MARK: - Chat Messages
 
     func saveChatMessage(_ message: ChatMessage) async throws {
         let data = message.toFirestore()
@@ -427,8 +402,6 @@ nonisolated class CloudService: @unchecked Sendable {
             try await doc.reference.delete()
         }
     }
-
-    // MARK: - Delete User Data
 
     func deleteAllUserData(userId: String) async throws {
         let postsSnapshot = try await db.collection("posts")
@@ -499,8 +472,6 @@ nonisolated class CloudService: @unchecked Sendable {
         }
     }
 
-    // MARK: - Batch User Fetch
-
     func getUsers(authUserIds: [String]) async throws -> [UserProfile] {
         guard !authUserIds.isEmpty else { return [] }
         let chunks = authUserIds.chunked(into: 10)
@@ -518,7 +489,7 @@ nonisolated class CloudService: @unchecked Sendable {
     }
 }
 
-extension Array {
+nonisolated extension Array {
     func chunked(into size: Int) -> [[Element]] {
         stride(from: 0, to: count, by: size).map {
             Array(self[$0..<Swift.min($0 + size, count)])

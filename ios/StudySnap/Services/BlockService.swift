@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 @Observable
 class BlockService {
     static let shared = BlockService()
@@ -14,7 +15,8 @@ class BlockService {
 
     func configure(for userId: String) {
         currentUserId = userId
-        let stored = UserDefaults.standard.stringArray(forKey: storageKey) ?? []
+        let key = storageKey
+        let stored = UserDefaults.standard.stringArray(forKey: key) ?? []
         blockedUserIds = Set(stored)
         migrateLegacyDataIfNeeded()
     }
@@ -44,7 +46,9 @@ class BlockService {
     }
 
     private func save() {
-        UserDefaults.standard.set(Array(blockedUserIds), forKey: storageKey)
+        let key = storageKey
+        let ids = Array(blockedUserIds)
+        UserDefaults.standard.set(ids, forKey: key)
     }
 
     private func migrateLegacyDataIfNeeded() {
