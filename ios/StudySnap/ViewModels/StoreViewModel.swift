@@ -24,7 +24,7 @@ class StoreViewModel {
     }
 
     private func refreshConfigured() {
-        let rcKey = Config.allValues["EXPO_PUBLIC_REVENUECAT_IOS_API_KEY"] ?? Config.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY
+        let rcKey = Config.EXPO_PUBLIC_REVENUECAT_API_KEY
         isConfigured = !rcKey.isEmpty && Purchases.isConfigured
     }
 

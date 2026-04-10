@@ -1,46 +1,11 @@
-# 起動時クラッシュの根本修正（別視点アプローチ）
+# RevenueCat APIキーの参照先を修正
 
-## 問題
+**問題**
+コードが存在しないキー名（`EXPO_PUBLIC_REVENUECAT_IOS_API_KEY` / `EXPO_PUBLIC_REVENUECAT_TEST_API_KEY`）を探しているため、本番用APIキー（`EXPO_PUBLIC_REVENUECAT_API_KEY`）が使われていません。結果としてRevenueCatが正しく初期化されず、価格がドル表示のままになっています。
 
-特定ユーザー（iPhone 16 Pro, iOS 26.4）でアプリ起動直後にクラッシュ。従来の修正が効いていないため、起動シーケンス全体を見直します。
+**修正内容**
 
-## 修正内容
-
-### 1. Auth State Listenerのアクター安全化
-
-- Firebaseのコールバック内で `@MainActor` メソッドをバックグラウンドスレッドから呼んでいる箇所を修正
-- すべてのロジックを `Task { @MainActor in }` の中に移動
-- iOS 26.4のStrict Concurrencyランタイムチェック対応
-
-### 2. 起動シーケンスの順序制御
-
-- 起動時に複数のTaskが同時に走る競合を解消
-- データ読み込みを順次実行に変更（並列→直列）
-- Firebase初期化完了を確実に待ってからFirestore操作を開始
-
-### 3. CloudServiceのスレッド安全化
-
-- `@unchecked Sendable` + NSLockパターンを廃止
-- Swiftの `actor` に変更して、ランタイムが安全性を保証
-- iOS 26のStrict Concurrency対応
-
-### 4. 起動時の防御的エラーハンドリング
-
-- 初回データ読み込みのすべての操作をtry/catchで保護
-- クラッシュする代わりにエラーを無視して空の状態で起動
-- URLSessionウォームアップハック（不要な強制アンラップ）を削除
-
-### 5. BlockServiceの同時アクセス保護
-
-- UserDefaults読み書きの競合を防止
-- `@MainActor`を明示的に指定
-
-## 変更されるファイル
-
-- 認証サービス（ログイン処理）
-- データストア（データ読み込み）
-- クラウドサービス（サーバー通信）
-- ブロックサービス（ブロック機能）
-- アプリ起動処理
-- メイン画面
+- アプリ起動時のRevenueCat初期化コードで、`EXPO_PUBLIC_REVENUECAT_API_KEY` を使うように変更
+- ストア画面の設定確認コードでも同様に修正
+- これにより、環境変数に設定した本番用APIキーが正しく読み込まれ、日本円で価格が表示されるようになります
 
