@@ -10,6 +10,7 @@ class StoreViewModel {
     var isLoading = false
     var isPurchasing = false
     var error: String?
+    var offeringsDiagnostic: String?
     var subscriptionExpirationDate: Date?
     var willRenew = false
     var isConfigured = false
@@ -55,10 +56,29 @@ class StoreViewModel {
             return
         }
         isLoading = true
+        offeringsDiagnostic = nil
         do {
-            offerings = try await Purchases.shared.offerings()
+            let fetched = try await Purchases.shared.offerings()
+            offerings = fetched
+
+            let allIds = fetched.all.keys.sorted()
+            print("[RevenueCat] Offerings fetched: \(allIds)")
+
+            if fetched.current == nil {
+                if fetched.all.isEmpty {
+                    offeringsDiagnostic = "RevenueCatにOfferingが登録されていません。ダッシュボードでOfferingと商品を設定してください。"
+                } else {
+                    offeringsDiagnostic = "Offeringはありますが、\"Current\"が未設定です。RevenueCatダッシュボードでCurrent Offeringを設定してください。(offerings: \(allIds.joined(separator: ", ")))"
+                }
+            } else if let current = fetched.current {
+                print("[RevenueCat] Current offering: \(current.identifier), packages: \(current.availablePackages.count)")
+                if current.availablePackages.isEmpty {
+                    offeringsDiagnostic = "Current Offering (\(current.identifier)) にパッケージがありません。App Store Connectで商品のステータスを確認してください（却下・メタデータ不足の場合は取得できません）。"
+                }
+            }
         } catch {
             self.error = error.localizedDescription
+            print("[RevenueCat] Fetch offerings error: \(error)")
         }
         isLoading = false
     }

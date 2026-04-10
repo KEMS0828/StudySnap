@@ -168,6 +168,23 @@ struct StudySnapPaywallView: View {
                     Text("プランを読み込めませんでした")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+
+                    if let diagnostic = store.offeringsDiagnostic {
+                        Text(diagnostic)
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+                    }
+
+                    if let error = store.error {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+                    }
+
                     Button("再試行") {
                         Task { await store.fetchOfferings() }
                     }
