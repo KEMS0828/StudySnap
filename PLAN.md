@@ -1,38 +1,31 @@
-# App Store審査リジェクト対応（3.1.2c + 2.1）
+# 購入フローの修正 — 決済がスムーズに完了するように
 
-## リジェクト理由と対応
+## 問題
 
-### 1. Guideline 3.1.2(c) — サブスクリプション情報の不足
+「プランに登録する」ボタンを押すとAppleアカウントのサインインが出て、情報を入力しても何も起こらない。
 
-**対応（App Store Connect側 — あなたが手動で行う作業）：**
+## 原因の可能性
 
-- App Store Connectの「アプリ情報」→「プライバシーポリシー」フィールドにURLを設定
-- App Store Connectの「アプリ情報」→「EULA」にApple標準EULAを使用するか、カスタムEULAのURLを設定
-- アプリの説明文の末尾に以下を追記：
-  ```
-  利用規約(EULA): https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
-  プライバシーポリシー: [あなたのURL]
-  ```
+- 購入処理中に「支払い保留」エラーが発生しても、何のメッセージも表示されずに無視されている
+- RevenueCatが正しく設定されていない場合も無言で終了する
+- 購入完了後の状態更新が正しく反映されていない可能性
 
-**対応（アプリ内 — コード変更）：**
+## 修正内容
 
-- ペイウォール画面のフッターに、サブスクリプションの詳細情報をより明確に表示
-  - サブスクリプション名（例: "StudySnap Pro 月額プラン"）
-  - 期間と価格（例: "¥480/月"）
-  - 自動更新の説明
-  - プライバシーポリシーとEULAへのリンク（既にあるが、より見やすく）
+**購入処理の改善**
 
-### 2. Guideline 2.1 — PassKitフレームワークの問題
+- 「支払い保留中」の場合、ユーザーに「決済が保留中です。しばらくお待ちください」とメッセージを表示
+- RevenueCatが未設定の場合もエラーメッセージを表示
+- 購入の各ステップでログを追加し、どこで止まっているか把握できるようにする
+- 購入成功後に明示的に顧客情報を再取得して、プレミアム状態を確実に更新
 
-**状況：** PassKitはRevenueCat SDKの依存関係として自動的にバイナリに含まれています。アプリはサブスクリプション（IAP）のみで、Apple Payでの直接決済は不要です（StoreKitの購入フローでユーザーのApple Pay設定が自動的に使われます）。
+**購入ボタンの改善**
 
-**対応（App Review返信 — あなたが手動で行う作業）：**
+- ボタンを押したらすぐにStoreKitの決済画面（Apple Pay対応）が表示されるように、不要な待機や前処理を排除
+- 購入中のローディング表示をより明確に
 
-- App Reviewに返信して以下を説明：
-  > "The PassKit framework is included as a transitive dependency of the RevenueCat SDK (purchases-ios-spm), which we use for subscription management. Our app does not directly implement Apple Pay — all payments are processed through StoreKit In-App Purchases. Users who have Apple Pay configured as their Apple ID payment method can already use it during the StoreKit purchase flow."
+**エラー表示の強化**
 
-### まとめ
-
-- **コード変更**: ペイウォールのフッターにサブスク情報をより詳細に表示
-- **あなたの作業**: App Store Connectでプライバシーポリシー/EULA URLを設定 + アプリ説明文に追記 + App Reviewに返信
+- すべてのエラーケースでユーザーにわかりやすい日本語メッセージを表示
+- ネットワークエラー、設定エラーなどを区別して案内
 

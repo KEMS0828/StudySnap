@@ -40,6 +40,14 @@ struct StudySnapPaywallView: View {
             } message: {
                 Text(store.error ?? "")
             }
+            .alert("お知らせ", isPresented: Binding(
+                get: { store.infoMessage != nil },
+                set: { if !$0 { store.infoMessage = nil } }
+            )) {
+                Button("OK") { store.infoMessage = nil }
+            } message: {
+                Text(store.infoMessage ?? "")
+            }
             .onChange(of: store.isPremium) { _, isPremium in
                 if isPremium { dismiss() }
             }

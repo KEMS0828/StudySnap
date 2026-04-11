@@ -10,6 +10,7 @@ class StoreViewModel {
     var isLoading = false
     var isPurchasing = false
     var error: String?
+    var infoMessage: String?
     var offeringsDiagnostic: String?
     var subscriptionExpirationDate: Date?
     var willRenew = false
@@ -84,17 +85,38 @@ class StoreViewModel {
     }
 
     func purchase(package: Package) async {
-        guard Purchases.isConfigured else { return }
+        guard Purchases.isConfigured else {
+            error = "ストアが初期化されていません。アプリを再起動してください。"
+            print("[StoreViewModel] purchase failed: Purchases not configured")
+            return
+        }
         isPurchasing = true
+        error = nil
+        infoMessage = nil
+        print("[StoreViewModel] Starting purchase for: \(package.identifier)")
         do {
             let result = try await Purchases.shared.purchase(package: package)
+            print("[StoreViewModel] Purchase result - cancelled: \(result.userCancelled)")
             if !result.userCancelled {
                 updatePremiumStatus(from: result.customerInfo)
+                let info = try await Purchases.shared.customerInfo()
+                updatePremiumStatus(from: info)
+                print("[StoreViewModel] Premium status after purchase: \(isPremium)")
             }
         } catch ErrorCode.purchaseCancelledError {
+            print("[StoreViewModel] Purchase cancelled by user")
         } catch ErrorCode.paymentPendingError {
+            print("[StoreViewModel] Payment pending")
+            infoMessage = "決済が保留中です。承認されるまでしばらくお待ちください。"
+        } catch ErrorCode.storeProblemError {
+            print("[StoreViewModel] Store problem: \(error)")
+            self.error = "App Storeに一時的な問題が発生しています。しばらくしてからお試しください。"
+        } catch ErrorCode.networkError {
+            print("[StoreViewModel] Network error: \(error)")
+            self.error = "ネットワークエラーが発生しました。接続を確認してもう一度お試しください。"
         } catch {
-            self.error = error.localizedDescription
+            print("[StoreViewModel] Purchase error: \(error)")
+            self.error = "購入処理中にエラーが発生しました: \(error.localizedDescription)"
         }
         isPurchasing = false
     }
