@@ -9,14 +9,13 @@ struct StudySnapPaywallView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    headerSection
-                    featuresSection
-                    packagesSection
-                    purchaseButton
-                    footerSection
-                }
+            VStack(spacing: 0) {
+                headerSection
+                featuresSection
+                packagesSection
+                Spacer(minLength: 0)
+                purchaseButton
+                footerSection
             }
             .background(Color(.systemGroupedBackground))
             .navigationBarTitleDisplayMode(.inline)
@@ -63,26 +62,10 @@ struct StudySnapPaywallView: View {
     }
 
     private var headerSection: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.orange, .yellow],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 80, height: 80)
-
-                Image(systemName: "crown.fill")
-                    .font(.system(size: 36))
-                    .foregroundStyle(.white)
-            }
-            .padding(.top, 24)
-
+        VStack(spacing: 10) {
             Text("StudySnap Pro")
                 .font(.title.bold())
+                .padding(.top, 16)
 
             Text("もっと集中、もっと成長")
                 .font(.subheadline)
@@ -109,7 +92,7 @@ struct StudySnapPaywallView: View {
                 .background(remaining <= 600 ? Color.orange.opacity(0.1) : Color(.tertiarySystemBackground), in: Capsule())
             }
         }
-        .padding(.bottom, 24)
+        .padding(.bottom, 16)
     }
 
     private var featuresSection: some View {
@@ -123,17 +106,17 @@ struct StudySnapPaywallView: View {
                         endPoint: .trailing
                     )
                 )
-                .padding(.top, 20)
+                .padding(.top, 14)
 
             Text("勉強時間が無制限に")
-                .font(.title3.bold())
+                .font(.subheadline.bold())
 
-            Text("毎日1時間の制限がなくなり、\n無制限に勉強を記録できます")
-                .font(.subheadline)
+            Text("毎日1時間の制限がなくなり、無制限に勉強を記録できます")
+                .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 8)
-                .padding(.bottom, 20)
+                .padding(.bottom, 14)
         }
         .frame(maxWidth: .infinity)
         .background(
@@ -149,7 +132,7 @@ struct StudySnapPaywallView: View {
                 .stroke(Color.orange.opacity(0.2), lineWidth: 1)
         )
         .padding(.horizontal, 16)
-        .padding(.bottom, 24)
+        .padding(.bottom, 16)
     }
 
     private var packagesSection: some View {
@@ -202,7 +185,7 @@ struct StudySnapPaywallView: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 20)
+        .padding(.bottom, 12)
     }
 
     private var purchaseButton: some View {
@@ -235,37 +218,16 @@ struct StudySnapPaywallView: View {
             .disabled(selectedPackage == nil || store.isPurchasing)
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 12)
+        .padding(.bottom, 8)
     }
 
     private var footerSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 8) {
             Button("購入を復元") {
                 Task { await store.restore() }
             }
             .font(.footnote)
             .foregroundStyle(.secondary)
-
-            if let pkg = selectedPackage {
-                VStack(spacing: 6) {
-                    Text("サブスクリプションについて")
-                        .font(.caption.bold())
-                        .foregroundStyle(.primary)
-
-                    let title = pkg.storeProduct.localizedTitle.isEmpty ? "StudySnap Pro" : pkg.storeProduct.localizedTitle
-                    VStack(spacing: 2) {
-                        Text("\(title)（\(subscriptionPeriodText(for: pkg))）")
-                            .font(.caption2.bold())
-                        Text("価格: \(pkg.storeProduct.localizedPriceString) / \(subscriptionPeriodShort(for: pkg))")
-                            .font(.caption2)
-                        Text("期間: \(subscriptionDurationText(for: pkg))")
-                            .font(.caption2)
-                    }
-                    .foregroundStyle(.secondary)
-                }
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 24)
-            }
 
             VStack(spacing: 4) {
                 Text("サブスクリプションはApple IDに対して課金されます。現在の期間が終了する24時間以上前にキャンセルしない限り、サブスクリプションは自動的に更新されます。アカウントには期間終了前の24時間以内に更新料金が課金されます。")
@@ -278,7 +240,7 @@ struct StudySnapPaywallView: View {
                     .foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center)
             }
-            .padding(.horizontal, 24)
+            .padding(.horizontal, 20)
 
             HStack(spacing: 8) {
                 NavigationLink {
@@ -303,7 +265,7 @@ struct StudySnapPaywallView: View {
             .font(.caption2)
             .foregroundStyle(.secondary)
         }
-        .padding(.bottom, 32)
+        .padding(.bottom, 16)
     }
 
     private func subscriptionDurationText(for package: Package) -> String {
