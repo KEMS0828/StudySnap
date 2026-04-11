@@ -97,23 +97,46 @@ class StoreViewModel {
         do {
             let result = try await Purchases.shared.purchase(package: package)
             print("[StoreViewModel] Purchase result - cancelled: \(result.userCancelled)")
-            if !result.userCancelled {
+            if result.userCancelled {
+                infoMessage = "購入がキャンセルされました。"
+            } else {
                 updatePremiumStatus(from: result.customerInfo)
+                try? await Task.sleep(for: .seconds(1))
                 let info = try await Purchases.shared.customerInfo()
                 updatePremiumStatus(from: info)
                 print("[StoreViewModel] Premium status after purchase: \(isPremium)")
+
+                if !isPremium {
+                    let activeEntitlements = info.entitlements.active.keys.joined(separator: ", ")
+                    print("[StoreViewModel] Active entitlements: \(activeEntitlements)")
+                    print("[StoreViewModel] Expected entitlement: \(entitlementID)")
+                    if info.entitlements.active.isEmpty {
+                        infoMessage = "購入は完了しましたが、プランがまだ反映されていません。しばらく待ってからアプリを再起動してください。"
+                    } else {
+                        infoMessage = "購入は完了しましたが、エンタイトルメントID(\"\(entitlementID)\")が一致しません。RevenueCatダッシュボードの設定を確認してください。(active: \(activeEntitlements))"
+                    }
+                } else {
+                    infoMessage = "プランに登録しました！"
+                }
             }
-        } catch ErrorCode.purchaseCancelledError {
-            print("[StoreViewModel] Purchase cancelled by user")
-        } catch ErrorCode.paymentPendingError {
-            print("[StoreViewModel] Payment pending")
-            infoMessage = "決済が保留中です。承認されるまでしばらくお待ちください。"
-        } catch ErrorCode.storeProblemError {
-            print("[StoreViewModel] Store problem: \(error)")
-            self.error = "App Storeに一時的な問題が発生しています。しばらくしてからお試しください。"
-        } catch ErrorCode.networkError {
-            print("[StoreViewModel] Network error: \(error)")
-            self.error = "ネットワークエラーが発生しました。接続を確認してもう一度お試しください。"
+        } catch let purchaseError as ErrorCode {
+            print("[StoreViewModel] RevenueCat error: \(purchaseError) (\(purchaseError.rawValue))")
+            switch purchaseError {
+            case .purchaseCancelledError:
+                infoMessage = "購入がキャンセルされました。"
+            case .paymentPendingError:
+                infoMessage = "決済が保留中です。承認されるまでしばらくお待ちください。"
+            case .storeProblemError:
+                self.error = "App Storeに一時的な問題が発生しています。しばらくしてからお試しください。"
+            case .networkError:
+                self.error = "ネットワークエラーが発生しました。接続を確認してもう一度お試しください。"
+            case .purchaseNotAllowedError:
+                self.error = "このデバイスでは購入が許可されていません。設定を確認してください。"
+            case .purchaseInvalidError:
+                self.error = "無効な購入です。App Store Connectの商品設定を確認してください。"
+            default:
+                self.error = "購入エラー(\(purchaseError.rawValue)): \(purchaseError.localizedDescription)"
+            }
         } catch {
             print("[StoreViewModel] Purchase error: \(error)")
             self.error = "購入処理中にエラーが発生しました: \(error.localizedDescription)"
