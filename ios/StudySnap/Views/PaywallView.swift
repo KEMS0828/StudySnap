@@ -231,7 +231,7 @@ struct StudySnapPaywallView: View {
     }
 
     private var footerSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 12) {
             Button("購入を復元") {
                 Task { await store.restore() }
             }
@@ -239,41 +239,78 @@ struct StudySnapPaywallView: View {
             .foregroundStyle(.secondary)
 
             if let pkg = selectedPackage {
-                VStack(spacing: 4) {
-                    Text("\(pkg.storeProduct.localizedTitle) — \(subscriptionPeriodText(for: pkg))")
-                        .font(.caption2.bold())
-                        .foregroundStyle(.secondary)
-                    Text("\(pkg.storeProduct.localizedPriceString) / \(subscriptionPeriodShort(for: pkg))")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                VStack(spacing: 6) {
+                    Text("サブスクリプションについて")
+                        .font(.caption.bold())
+                        .foregroundStyle(.primary)
+
+                    let title = pkg.storeProduct.localizedTitle.isEmpty ? "StudySnap Pro" : pkg.storeProduct.localizedTitle
+                    VStack(spacing: 2) {
+                        Text("\(title)（\(subscriptionPeriodText(for: pkg))）")
+                            .font(.caption2.bold())
+                        Text("価格: \(pkg.storeProduct.localizedPriceString) / \(subscriptionPeriodShort(for: pkg))")
+                            .font(.caption2)
+                        Text("期間: \(subscriptionDurationText(for: pkg))")
+                            .font(.caption2)
+                    }
+                    .foregroundStyle(.secondary)
                 }
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+                .padding(.horizontal, 24)
             }
 
-            Text("サブスクリプションは自動更新されます。期間終了の24時間前までにキャンセルしない限り自動更新されます。")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-
-            HStack(spacing: 4) {
-                NavigationLink("利用規約") {
-                    TermsOfServiceView()
-                }
-                Text("・")
+            VStack(spacing: 4) {
+                Text("サブスクリプションはApple IDに対して課金されます。現在の期間が終了する24時間以上前にキャンセルしない限り、サブスクリプションは自動的に更新されます。アカウントには期間終了前の24時間以内に更新料金が課金されます。")
+                    .font(.caption2)
                     .foregroundStyle(.tertiary)
-                NavigationLink("プライバシーポリシー") {
-                    PrivacyPolicyView()
+                    .multilineTextAlignment(.center)
+
+                Text("サブスクリプションの管理とキャンセルは、購入後にApple IDの設定から行えます。")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal, 24)
+
+            HStack(spacing: 8) {
+                NavigationLink {
+                    TermsOfServiceView()
+                } label: {
+                    Text("利用規約")
+                        .underline()
                 }
-                Text("・")
+                Text("｜")
+                    .foregroundStyle(.tertiary)
+                NavigationLink {
+                    PrivacyPolicyView()
+                } label: {
+                    Text("プライバシーポリシー")
+                        .underline()
+                }
+                Text("｜")
                     .foregroundStyle(.tertiary)
                 Link("EULA", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                    .underline()
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
         }
-        .padding(.bottom, 24)
+        .padding(.bottom, 32)
+    }
+
+    private func subscriptionDurationText(for package: Package) -> String {
+        switch package.packageType {
+        case .annual: return "1年間（自動更新）"
+        case .monthly: return "1ヶ月間（自動更新）"
+        case .weekly: return "1週間（自動更新）"
+        case .twoMonth: return "2ヶ月間（自動更新）"
+        case .threeMonth: return "3ヶ月間（自動更新）"
+        case .sixMonth: return "6ヶ月間（自動更新）"
+        default:
+            if package.identifier.lowercased().contains("year") { return "1年間（自動更新）" }
+            if package.identifier.lowercased().contains("month") { return "1ヶ月間（自動更新）" }
+            return "自動更新"
+        }
     }
 
     private func subscriptionPeriodText(for package: Package) -> String {
