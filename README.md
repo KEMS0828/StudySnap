@@ -35,7 +35,7 @@
 <img width="200" height="..." alt="IMG_0356" src="https://github.com/user-attachments/assets/5d7a1c91-173e-420e-bfc8-46439c9ee33b" />
 
 ## Tech
-- Flutter
+- Swift
 - Firebase
 
 ## 経緯
