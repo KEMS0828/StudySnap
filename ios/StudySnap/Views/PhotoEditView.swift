@@ -510,7 +510,7 @@ struct PhotoEditView: View {
                     HStack {
                         Text(selectedStamp.emoji)
                             .font(.system(size: 14))
-                        Slider(value: $stampSize, in: 20...80)
+                        Slider(value: $stampSize, in: 20...140)
                         Text(selectedStamp.emoji)
                             .font(.system(size: 28))
                     }
