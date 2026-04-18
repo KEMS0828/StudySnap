@@ -49,7 +49,6 @@ struct TimelineView: View {
     @State private var hasInitiallyScrolled = false
     @State private var needsScrollToBottom = false
     @State private var isRefreshing = false
-    @State private var refreshCompletedCount: Int = 0
 
     private enum PendingNavigation {
         case cameraPreview
@@ -337,6 +336,7 @@ struct TimelineView: View {
                 }
                 .onScrollGeometryChange(for: CGFloat.self) { geo in
                     let maxOffset = geo.contentSize.height - geo.containerSize.height + geo.contentInsets.top + geo.contentInsets.bottom
+                    guard maxOffset > 0 else { return -CGFloat.greatestFiniteMagnitude }
                     return geo.contentOffset.y - maxOffset
                 } action: { _, overscroll in
                     if overscroll > 60 && !isRefreshing {
@@ -362,7 +362,6 @@ struct TimelineView: View {
                         scrollToBottom(proxy: proxy)
                     }
                 }
-                .sensoryFeedback(.impact(weight: .medium), trigger: refreshCompletedCount)
                 .onChange(of: dataStore.currentGroup?.id) { _, _ in
                     hasInitiallyScrolled = false
                     needsScrollToBottom = true
@@ -378,7 +377,6 @@ struct TimelineView: View {
         Task {
             await dataStore.refreshTimelineAsync()
             isRefreshing = false
-            refreshCompletedCount += 1
         }
     }
 
