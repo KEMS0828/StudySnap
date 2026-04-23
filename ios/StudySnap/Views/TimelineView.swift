@@ -962,18 +962,18 @@ private struct PostPhotoCardView: View {
 
     @State private var imageAspect: CGFloat? = nil
 
-    private let targetArea: CGFloat = 180 * 240
+    private let targetArea: CGFloat = 150 * 200
 
     private var cardWidth: CGFloat {
-        guard let aspect = imageAspect, aspect > 0 else { return 180 }
+        guard let aspect = imageAspect, aspect > 0 else { return 150 }
         let w = sqrt(targetArea * aspect)
-        return min(max(w, 140), 280)
+        return min(max(w, 120), 220)
     }
 
     private var cardHeight: CGFloat {
-        guard let aspect = imageAspect, aspect > 0 else { return 240 }
+        guard let aspect = imageAspect, aspect > 0 else { return 200 }
         let h = sqrt(targetArea / aspect)
-        return min(max(h, 140), 280)
+        return min(max(h, 120), 220)
     }
 
     var body: some View {
