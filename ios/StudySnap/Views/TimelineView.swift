@@ -471,83 +471,123 @@ struct TimelineView: View {
     }
 
     private var startStudyCard: some View {
-        VStack(spacing: 0) {
+        Group {
             if canStartStudy {
-                Button {
-                    startStudyFlow()
-                } label: {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.blue, .cyan],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 36, height: 36)
-
-                            Image(systemName: "play.fill")
-                                .font(.subheadline)
-                                .foregroundStyle(.white)
-                        }
-
-                        Text("勉強を始める")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.primary)
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .font(.caption.bold())
-                            .foregroundStyle(.tertiary)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
-                }
-                .buttonStyle(.plain)
+                startStudyHero
             } else {
-                VStack(spacing: 8) {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(Color(.systemGray4))
-                                .frame(width: 36, height: 36)
-
-                            Image(systemName: "lock.fill")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        Text("今日の無料枠を使い切りました")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.primary)
-
-                        Spacer()
-                    }
-
-                    Button {
-                        showPaywall = true
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "crown.fill")
-                            Text("Proにアップグレード")
-                                .fontWeight(.semibold)
-                        }
-                        .font(.caption)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.orange)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
+                limitReachedHero
             }
         }
+    }
+
+    private var startStudyHero: some View {
+        Button {
+            startStudyFlow()
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.22))
+                        .frame(width: 52, height: 52)
+                    Circle()
+                        .stroke(.white.opacity(0.35), lineWidth: 1)
+                        .frame(width: 52, height: 52)
+                    Image(systemName: "play.fill")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.white)
+                        .offset(x: 1)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("勉強を始める")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text("カメラで記録して仲間に承認してもらおう")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.85))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+
+                Spacer(minLength: 4)
+
+                Image(systemName: "arrow.right")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(.white)
+                    .padding(9)
+                    .background(.white.opacity(0.22), in: Circle())
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(
+                LinearGradient(
+                    colors: [Color(red: 0.09, green: 0.45, blue: 0.98), Color(red: 0.16, green: 0.72, blue: 0.98)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                in: .rect(cornerRadius: 20, style: .continuous)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(.white.opacity(0.18), lineWidth: 0.5)
+            )
+            .shadow(color: .blue.opacity(0.28), radius: 14, x: 0, y: 8)
+        }
+        .buttonStyle(HeroPressStyle())
+        .sensoryFeedback(.impact(weight: .medium), trigger: showModeSelection)
+    }
+
+    private var limitReachedHero: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.22))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "lock.fill")
+                        .font(.body.weight(.bold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("今日の無料枠を使い切りました")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text("Proで無制限に勉強を記録")
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.9))
+                }
+
+                Spacer(minLength: 4)
+            }
+
+            Button {
+                showPaywall = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "crown.fill")
+                    Text("Proにアップグレード")
+                        .fontWeight(.bold)
+                }
+                .font(.subheadline)
+                .foregroundStyle(Color.orange)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(.white, in: Capsule())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(
+            LinearGradient(
+                colors: [Color(red: 1.0, green: 0.56, blue: 0.24), Color(red: 1.0, green: 0.36, blue: 0.36)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: .rect(cornerRadius: 20, style: .continuous)
+        )
+        .shadow(color: .orange.opacity(0.28), radius: 14, x: 0, y: 8)
     }
 
 
@@ -749,6 +789,15 @@ struct ChatMessageRow: View {
     }
 }
 
+struct HeroPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .opacity(configuration.isPressed ? 0.92 : 1)
+            .animation(.spring(duration: 0.25, bounce: 0.3), value: configuration.isPressed)
+    }
+}
+
 struct PostCardView: View {
     let post: StudyPost
     let dataStore: DataStore
@@ -766,51 +815,47 @@ struct PostCardView: View {
     @State private var showPhoneVerificationAlert: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 12) {
                 ProfileAvatarView(
                     photoUrl: post.userPhotoUrl,
                     name: post.userName,
-                    size: 40
+                    size: 42
+                )
+                .overlay(
+                    Circle()
+                        .stroke(
+                            LinearGradient(colors: [.blue.opacity(0.35), .cyan.opacity(0.25)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                            lineWidth: 1.5
+                        )
+                        .padding(-2)
                 )
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text(post.userName)
-                        .font(.headline)
-                    HStack(spacing: 4) {
-                        Image(systemName: "clock")
-                            .font(.caption2)
-                        Text(post.formattedDuration)
-                            .font(.caption)
-                        Text("•")
-                            .font(.caption)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.primary)
+                    HStack(spacing: 6) {
+                        HStack(spacing: 3) {
+                            Image(systemName: "clock.fill")
+                                .font(.system(size: 9, weight: .bold))
+                            Text(post.formattedDuration)
+                                .font(.caption2.weight(.semibold))
+                        }
+                        .foregroundStyle(.blue)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(.blue.opacity(0.12), in: Capsule())
+
                         Text(relativeTimeString(from: post.createdAt))
-                            .font(.caption)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
-                    .foregroundStyle(.secondary)
                 }
 
-                Spacer()
+                Spacer(minLength: 4)
 
-                if post.isApproved {
-                    Label("全承認済", systemImage: "checkmark.seal.fill")
-                        .font(.caption.bold())
-                        .foregroundStyle(.green)
-                } else if approvedCount > 0 {
-                    Text("\(approvedCount)/\(post.photoUrls.count)承認")
-                        .font(.caption.bold())
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(.blue, in: Capsule())
-                } else {
-                    Text("未承認")
-                        .font(.caption.bold())
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(.orange, in: Capsule())
-                }
+                approvalBadge
 
                 if !isOtherUser {
                     Menu {
@@ -826,9 +871,10 @@ struct PostCardView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .font(.body)
+                            .font(.footnote.weight(.bold))
                             .foregroundStyle(.secondary)
-                            .frame(width: 32, height: 32)
+                            .frame(width: 30, height: 30)
+                            .background(Color(.tertiarySystemFill), in: Circle())
                             .contentShape(.rect)
                     }
                 }
@@ -848,25 +894,40 @@ struct PostCardView: View {
                 postApprovalButton
             }
 
-            if !post.subject.isEmpty {
-                HStack(spacing: 6) {
-                    Image(systemName: "book.fill")
-                        .font(.caption)
-                        .foregroundStyle(.tint)
-                    Text(post.subject)
-                        .font(.subheadline.bold())
-                }
-            }
+            if !post.subject.isEmpty || !post.reflection.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    if !post.subject.isEmpty {
+                        HStack(spacing: 6) {
+                            Image(systemName: "book.fill")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundStyle(.blue)
+                            Text(post.subject)
+                                .font(.footnote.weight(.bold))
+                                .foregroundStyle(.primary)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.blue.opacity(0.1), in: Capsule())
+                    }
 
-            if !post.reflection.isEmpty {
-                Text(post.reflection)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(3)
+                    if !post.reflection.isEmpty {
+                        Text(post.reflection)
+                            .font(.subheadline)
+                            .foregroundStyle(.primary.opacity(0.85))
+                            .lineSpacing(3)
+                            .lineLimit(4)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
             }
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 22, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Color.primary.opacity(0.04), lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 4)
         .sheet(isPresented: $showEditSheet) {
             PostEditView(post: post, dataStore: dataStore, isPresented: $showEditSheet)
                 .interactiveDismissDisabled()
@@ -885,6 +946,36 @@ struct PostCardView: View {
             Button("キャンセル", role: .cancel) {}
         } message: {
             Text("削除すると元に戻せません。承認済みの勉強時間はそのまま維持されます。")
+        }
+    }
+
+    @ViewBuilder
+    private var approvalBadge: some View {
+        if post.isApproved {
+            HStack(spacing: 3) {
+                Image(systemName: "checkmark.seal.fill")
+                    .font(.system(size: 10, weight: .bold))
+                Text("全承認")
+                    .font(.caption2.weight(.bold))
+            }
+            .foregroundStyle(.green)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(.green.opacity(0.12), in: Capsule())
+        } else if approvedCount > 0 {
+            Text("\(approvedCount)/\(post.photoUrls.count)")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.blue)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.blue.opacity(0.12), in: Capsule())
+        } else {
+            Text("未承認")
+                .font(.caption2.weight(.bold))
+                .foregroundStyle(.orange)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(.orange.opacity(0.14), in: Capsule())
         }
     }
 
