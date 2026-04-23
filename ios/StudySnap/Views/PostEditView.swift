@@ -18,6 +18,7 @@ struct PostEditView: View {
     @State private var showPostConfirmation: Bool = false
     @State private var showNGWordAlert: Bool = false
     @State private var isLoadingPhotos: Bool = true
+    @FocusState private var isTextFieldFocused: Bool
 
     private let penColors: [Color] = [.black, .red, .orange, .yellow, .green, .blue, .purple, .white]
 
@@ -89,7 +90,18 @@ struct PostEditView: View {
             .task {
                 await loadPhotosFromUrls()
             }
-            .scrollDismissesKeyboard(.interactively)
+            .scrollDismissesKeyboard(.immediately)
+            .toolbar {
+                ToolbarItem(placement: .keyboard) {
+                    HStack {
+                        Spacer()
+                        Button("完了") {
+                            isTextFieldFocused = false
+                        }
+                        .fontWeight(.semibold)
+                    }
+                }
+            }
             .alert("不適切な表現が含まれています", isPresented: $showNGWordAlert) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -326,12 +338,14 @@ struct PostEditView: View {
                     .font(.headline)
                 TextField("例: 数学の微分積分", text: $subject)
                     .textFieldStyle(.roundedBorder)
+                    .focused($isTextFieldFocused)
             }
 
             VStack(alignment: .leading, spacing: 8) {
                 Label("振り返り", systemImage: "text.bubble.fill")
                     .font(.headline)
                 TextEditor(text: $reflection)
+                    .focused($isTextFieldFocused)
                     .frame(minHeight: 100)
                     .scrollContentBackground(.hidden)
                     .padding(8)

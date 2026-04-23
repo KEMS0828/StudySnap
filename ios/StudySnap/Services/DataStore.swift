@@ -69,6 +69,8 @@ class DataStore {
                 try Task.checkCancellation()
                 await self.loadUser(authUserId: authUserId, displayName: displayName)
                 try Task.checkCancellation()
+                await self.detectKickedFromGroup()
+                try Task.checkCancellation()
                 await self.loadGroups()
                 try Task.checkCancellation()
                 await self.loadPosts()
@@ -282,6 +284,57 @@ class DataStore {
             try? await cloud.saveGroup(group)
             currentGroup = group
             await loadGroups()
+        }
+    }
+
+    func updateGroupInfo(groupId: String, name: String, description: String, joinMethod: JoinMethod, newPhotoData: Data?) async {
+        guard var group = (currentGroup?.id == groupId ? currentGroup : allGroups.first(where: { $0.id == groupId })) else { return }
+        group.name = name
+        group.groupDescription = description
+        group.joinMethod = joinMethod.rawValue
+
+        if let data = newPhotoData {
+            if let url = try? await cloud.uploadPhoto(data, path: "communities/\(group.id)/cover/photo.jpg") {
+                group.groupPhotoUrl = url
+            }
+        }
+
+        do {
+            try await cloud.saveGroup(group)
+            if currentGroup?.id == group.id {
+                currentGroup = group
+            }
+            await loadGroups()
+        } catch {
+            generalError = "グループ情報の更新に失敗しました: \(error.localizedDescription)"
+        }
+    }
+
+    var wasKickedFromGroup: Bool = false
+
+    private func detectKickedFromGroup() async {
+        guard let user = currentUser, let group = currentGroup else { return }
+        if let fresh = try? await cloud.getGroupById(group.id) {
+            if !fresh.memberIds.contains(user.id) {
+                var updatedUser = user
+                updatedUser.currentGroupId = nil
+                updatedUser.isAdmin = false
+                currentUser = updatedUser
+                currentGroup = nil
+                timelinePosts = []
+                chatMessages = []
+                wasKickedFromGroup = true
+                try? await cloud.saveUser(updatedUser)
+            }
+        } else {
+            var updatedUser = user
+            updatedUser.currentGroupId = nil
+            updatedUser.isAdmin = false
+            currentUser = updatedUser
+            currentGroup = nil
+            timelinePosts = []
+            chatMessages = []
+            try? await cloud.saveUser(updatedUser)
         }
     }
 
@@ -965,6 +1018,7 @@ class DataStore {
     }
 
     func refreshTimelineAsync() async {
+        await detectKickedFromGroup()
         await loadGroups()
         await cleanupExpiredPosts()
         await loadPosts()

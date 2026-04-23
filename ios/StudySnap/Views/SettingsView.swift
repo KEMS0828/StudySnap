@@ -563,9 +563,20 @@ struct GroupAdminView: View {
     @State private var showRemoveConfirm = false
     @State private var memberToRemove: String?
     @State private var members: [String: UserProfile] = [:]
+    @State private var showEditGroup = false
 
     var body: some View {
         List {
+            Section {
+                Button {
+                    showEditGroup = true
+                } label: {
+                    Label("グループ情報を編集", systemImage: "pencil")
+                }
+            } footer: {
+                Text("グループ名・説明・アイコン・参加方法を変更できます")
+            }
+
             if !group.pendingMemberIds.isEmpty {
                 Section {
                     ForEach(group.pendingMemberIds, id: \.self) { memberId in
@@ -647,6 +658,11 @@ struct GroupAdminView: View {
                 }
             }
             Button("キャンセル", role: .cancel) {}
+        }
+        .sheet(isPresented: $showEditGroup) {
+            if let currentGroup = dataStore.currentGroup {
+                EditGroupView(dataStore: dataStore, group: currentGroup, isPresented: $showEditGroup)
+            }
         }
     }
 

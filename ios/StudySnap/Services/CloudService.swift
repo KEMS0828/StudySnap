@@ -404,32 +404,6 @@ actor CloudService {
     }
 
     func deleteAllUserData(userId: String) async throws {
-        let postsSnapshot = try await db.collection("posts")
-            .whereField("userId", isEqualTo: userId)
-            .getDocuments()
-        for doc in postsSnapshot.documents {
-            if let photoUrls = doc.data()["photoUrls"] as? [String] {
-                for url in photoUrls {
-                    await deletePhoto(at: url)
-                }
-            }
-            try await doc.reference.delete()
-        }
-
-        let sessionsSnapshot = try await db.collection("sessions")
-            .whereField("ownerUserId", isEqualTo: userId)
-            .getDocuments()
-        for doc in sessionsSnapshot.documents {
-            try await doc.reference.delete()
-        }
-
-        let chatSnapshot = try await db.collection("chatMessages")
-            .whereField("userId", isEqualTo: userId)
-            .getDocuments()
-        for doc in chatSnapshot.documents {
-            try await doc.reference.delete()
-        }
-
         let goalsSnapshot = try await db.collection("goals")
             .whereField("ownerUserId", isEqualTo: userId)
             .getDocuments()

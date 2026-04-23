@@ -85,6 +85,16 @@ struct ContentView: View {
         } message: {
             Text(dataStore.generalError ?? "")
         }
+        .alert("グループから退会させられました", isPresented: Binding(
+            get: { dataStore.wasKickedFromGroup },
+            set: { if !$0 { dataStore.wasKickedFromGroup = false } }
+        )) {
+            Button("OK", role: .cancel) {
+                selectedTab = 0
+            }
+        } message: {
+            Text("管理者によりグループから退会させられました。新しいグループを探してください。")
+        }
     }
 
     private var splashView: some View {
