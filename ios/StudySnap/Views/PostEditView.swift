@@ -48,10 +48,6 @@ struct PostEditView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 100)
             }
-            .contentShape(.rect)
-            .onTapGesture {
-                isTextFieldFocused = false
-            }
             .navigationTitle("投稿を編集")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
