@@ -9,8 +9,6 @@ struct SubjectSelectionView: View {
     @State private var showAddSheet = false
     @State private var newSubjectName = ""
     @State private var newSubjectColorHex = "blue"
-    @State private var editingSubject: String?
-    @State private var editingColorHex = "blue"
 
     private let storageKey = "savedStudySubjects"
 
@@ -51,14 +49,6 @@ struct SubjectSelectionView: View {
                 )
                 .presentationDetents([.medium])
             }
-            .sheet(item: $editingSubject) { subject in
-                EditSubjectColorSheet(
-                    subjectName: subject,
-                    colorHex: $editingColorHex,
-                    onSave: { saveEditedColor(for: subject) }
-                )
-                .presentationDetents([.medium])
-            }
         }
     }
 
@@ -83,11 +73,7 @@ struct SubjectSelectionView: View {
                     color: color,
                     isSelected: selectedSubject == subject,
                     onSelect: { selectedSubject = subject },
-                    onDelete: { deleteSubject(subject) },
-                    onEditColor: {
-                        editingColorHex = colorHex
-                        editingSubject = subject
-                    }
+                    onDelete: { deleteSubject(subject) }
                 )
             }
         }
@@ -200,11 +186,6 @@ struct SubjectSelectionView: View {
         }
     }
 
-    private func saveEditedColor(for subject: String) {
-        SubjectColorStore.save(subject: subject, colorHex: editingColorHex)
-        editingSubject = nil
-    }
-
     private func nextAvailableColor() -> String {
         let usedColors = Set(SubjectColorStore.loadAll().values)
         let available = SubjectColorStore.availableColors.first { !usedColors.contains($0.hex) }
@@ -222,7 +203,6 @@ struct SubjectCardView: View {
     let isSelected: Bool
     var onSelect: () -> Void
     var onDelete: () -> Void
-    var onEditColor: () -> Void
 
     var body: some View {
         Button {
@@ -259,11 +239,6 @@ struct SubjectCardView: View {
         }
         .buttonStyle(.plain)
         .contextMenu {
-            Button {
-                onEditColor()
-            } label: {
-                Label("色を変更", systemImage: "paintpalette")
-            }
             Button(role: .destructive) {
                 onDelete()
             } label: {

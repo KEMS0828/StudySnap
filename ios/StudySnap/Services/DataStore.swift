@@ -206,6 +206,7 @@ class DataStore {
                 currentUser = user
                 currentGroup = mutableGroup
                 await loadPosts()
+                await loadChatMessages()
             } else {
                 mutableGroup.pendingMemberIds.append(user.id)
                 try? await cloud.saveGroup(mutableGroup)
@@ -273,6 +274,8 @@ class DataStore {
             try? await cloud.saveGroup(group)
             currentGroup = group
             await loadGroups()
+            await loadPosts()
+            await loadChatMessages()
         }
     }
 
