@@ -24,10 +24,33 @@ struct StudyingView: View {
     @State private var showDailyLimitAlert = false
     @State private var pulseAnimation = false
     @State private var isPaused = false
+    @State private var showMiniPreview = false
 
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
+                HStack {
+                    Spacer()
+                    Menu {
+                        Button {
+                            withAnimation(.spring(duration: 0.4)) {
+                                showMiniPreview = true
+                            }
+                            cameraService.startLivePreview()
+                        } label: {
+                            Label("写りを確認", systemImage: "camera.viewfinder")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 44, height: 44)
+                            .background(Color(.secondarySystemGroupedBackground), in: .circle)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.top, 8)
+
                 Spacer()
 
                 VStack(spacing: 32) {
@@ -121,6 +144,17 @@ struct StudyingView: View {
                 .padding(.bottom, 32)
             }
         }
+        .overlay(alignment: .bottomTrailing) {
+            if showMiniPreview {
+                miniPreviewCard
+                    .padding(.trailing, 16)
+                    .padding(.bottom, 180)
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.6, anchor: .bottomTrailing).combined(with: .opacity),
+                        removal: .scale(scale: 0.6, anchor: .bottomTrailing).combined(with: .opacity)
+                    ))
+            }
+        }
         .background(Color(.systemGroupedBackground))
         .onAppear {
             startTime = .now
@@ -133,6 +167,10 @@ struct StudyingView: View {
         .onDisappear {
             stopTimer()
             UIApplication.shared.isIdleTimerDisabled = false
+            if showMiniPreview {
+                cameraService.stopLivePreview()
+                showMiniPreview = false
+            }
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .background || newPhase == .inactive {
@@ -189,6 +227,54 @@ struct StudyingView: View {
                 stopStudy()
             }
             Button("キャンセル", role: .cancel) {}
+        }
+    }
+
+    @ViewBuilder
+    private var miniPreviewCard: some View {
+        let width: CGFloat = 150
+        let height: CGFloat = width * 16 / 9
+        ZStack {
+            Color.black
+            #if targetEnvironment(simulator)
+            VStack(spacing: 6) {
+                Image(systemName: "camera.fill")
+                    .font(.title3)
+                    .foregroundStyle(.white.opacity(0.7))
+                Text("プレビュー")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+            #else
+            if let session = cameraService.previewSession {
+                CameraPreviewRepresentable(session: session)
+            } else {
+                ProgressView()
+                    .tint(.white)
+            }
+            #endif
+        }
+        .frame(width: width, height: height)
+        .clipShape(.rect(cornerRadius: 18))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .strokeBorder(.white.opacity(0.15), lineWidth: 0.5)
+        )
+        .shadow(color: .black.opacity(0.35), radius: 14, x: 0, y: 6)
+        .overlay(alignment: .topTrailing) {
+            Button {
+                withAnimation(.spring(duration: 0.35)) {
+                    showMiniPreview = false
+                }
+                cameraService.stopLivePreview()
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 24, height: 24)
+                    .background(.black.opacity(0.6), in: .circle)
+            }
+            .padding(6)
         }
     }
 
@@ -255,6 +341,13 @@ struct StudyingView: View {
         UIApplication.shared.isIdleTimerDisabled = true
     }
 
+    private func closeMiniPreviewIfNeeded() {
+        if showMiniPreview {
+            cameraService.stopLivePreview()
+            showMiniPreview = false
+        }
+    }
+
     private func stopStudy() {
         let finalTime: TimeInterval
         if isPaused {
@@ -263,6 +356,7 @@ struct StudyingView: View {
             finalTime = accumulatedTime + Date.now.timeIntervalSince(startTime)
         }
         stopTimer()
+        closeMiniPreviewIfNeeded()
         cameraService.stopCapturing()
         onFinish(finalTime)
     }

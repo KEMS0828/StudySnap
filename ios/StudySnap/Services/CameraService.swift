@@ -23,6 +23,7 @@ class CameraService: NSObject {
     private var currentVideoRotationAngle: CGFloat = 90
     private var hasReceivedStableOrientation = false
     var isTransitioningToStudy = false
+    var isLivePreviewActive = false
 
     private var isSimulator: Bool {
         #if targetEnvironment(simulator)
@@ -221,6 +222,29 @@ class CameraService: NSObject {
     }
 
     private func stopSessionAfterCapture() {
+        guard let session = captureSession else { return }
+        if isLivePreviewActive { return }
+        sessionQueue.async {
+            if session.isRunning {
+                session.stopRunning()
+            }
+        }
+    }
+
+    func startLivePreview() {
+        guard !isSimulator else { return }
+        guard let session = captureSession else { return }
+        isLivePreviewActive = true
+        sessionQueue.async {
+            if !session.isRunning {
+                session.startRunning()
+            }
+        }
+    }
+
+    func stopLivePreview() {
+        isLivePreviewActive = false
+        guard !isSimulator else { return }
         guard let session = captureSession else { return }
         sessionQueue.async {
             if session.isRunning {
