@@ -24,8 +24,6 @@ class CameraService: NSObject {
     private var hasReceivedStableOrientation = false
     var isTransitioningToStudy = false
     var isLivePreviewActive = false
-    private var isSessionInterrupted = false
-    private var interruptionObservers: [NSObjectProtocol] = []
 
     private var isSimulator: Bool {
         #if targetEnvironment(simulator)
@@ -96,59 +94,6 @@ class CameraService: NSObject {
             self?.photoOutput = configuredOutput
             self?.previewSession = configuredSession
             self?.isSessionConfigured = true
-            self?.registerInterruptionObservers(for: configuredSession)
-        }
-    }
-
-    private func registerInterruptionObservers(for session: AVCaptureSession) {
-        removeInterruptionObservers()
-        let center = NotificationCenter.default
-        let interruptedObserver = center.addObserver(
-            forName: AVCaptureSession.wasInterruptedNotification,
-            object: session,
-            queue: .main
-        ) { [weak self] _ in
-            self?.isSessionInterrupted = true
-        }
-        let endedObserver = center.addObserver(
-            forName: AVCaptureSession.interruptionEndedNotification,
-            object: session,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self else { return }
-            self.isSessionInterrupted = false
-            if self.isRunning && !self.isPaused {
-                self.scheduleNextCapture(immediate: true)
-            }
-        }
-        let runtimeErrorObserver = center.addObserver(
-            forName: AVCaptureSession.runtimeErrorNotification,
-            object: session,
-            queue: .main
-        ) { [weak self] _ in
-            guard let self else { return }
-            self.sessionQueue.async {
-                if !session.isRunning {
-                    session.startRunning()
-                }
-            }
-        }
-        interruptionObservers = [interruptedObserver, endedObserver, runtimeErrorObserver]
-    }
-
-    private func removeInterruptionObservers() {
-        let center = NotificationCenter.default
-        for observer in interruptionObservers {
-            center.removeObserver(observer)
-        }
-        interruptionObservers = []
-    }
-
-    deinit {
-        let observers = interruptionObservers
-        let center = NotificationCenter.default
-        for observer in observers {
-            center.removeObserver(observer)
         }
     }
 
@@ -177,7 +122,6 @@ class CameraService: NSObject {
         capturedPhotos = []
         didReachPhotoLimit = false
         isRunning = true
-        isPaused = false
         startOrientationTracking()
 
         guard !isSimulator else { return }
@@ -208,33 +152,25 @@ class CameraService: NSObject {
     }
 
     func pauseCapturing() {
-        guard isRunning else { return }
+        guard isRunning, !isPaused else { return }
         isPaused = true
         captureTimer?.invalidate()
         captureTimer = nil
     }
 
     func resumeCapturing() {
-        guard isRunning else { return }
+        guard isRunning, isPaused else { return }
         isPaused = false
-        scheduleNextCapture(immediate: false)
+        scheduleNextCapture()
     }
 
-    func ensureCapturingScheduled() {
-        guard isRunning, !isPaused, !isSimulator else { return }
-        if captureTimer == nil || !(captureTimer?.isValid ?? false) {
-            scheduleNextCapture(immediate: true)
-        }
-    }
-
-    private func scheduleNextCapture(immediate: Bool = false) {
+    private func scheduleNextCapture() {
         guard isRunning, !isPaused, !isSimulator else { return }
         captureTimer?.invalidate()
-        captureTimer = nil
-        let interval = immediate ? min(2.0, currentMode.randomInterval()) : currentMode.randomInterval()
+        let interval = currentMode.randomInterval()
         let timer = Timer(timeInterval: interval, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
-                guard let self, self.isRunning, !self.isPaused else { return }
+                guard let self, self.isRunning else { return }
                 self.capturePhoto()
                 self.scheduleNextCapture()
             }
