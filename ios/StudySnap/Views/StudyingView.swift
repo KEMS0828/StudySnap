@@ -339,6 +339,12 @@ struct StudyingView: View {
         startTimer()
         cameraService.resumeCapturing()
         UIApplication.shared.isIdleTimerDisabled = true
+
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(800))
+            guard !isPaused else { return }
+            cameraService.ensureCapturingScheduled()
+        }
     }
 
     private func closeMiniPreviewIfNeeded() {
