@@ -19,6 +19,8 @@ class CameraService: NSObject {
     private let sessionQueue = DispatchQueue(label: "cameraSessionQueue")
     private var captureTimer: Timer?
     private var currentMode: StudyMode = .normal
+    private var scheduledFireDate: Date?
+    private var pausedRemainingInterval: TimeInterval?
     private let motionManager = CMMotionManager()
     private var currentVideoRotationAngle: CGFloat = 90
     private var hasReceivedStableOrientation = false
@@ -142,6 +144,8 @@ class CameraService: NSObject {
         isPaused = false
         captureTimer?.invalidate()
         captureTimer = nil
+        scheduledFireDate = nil
+        pausedRemainingInterval = nil
         stopOrientationTracking()
         guard !isSimulator else { return }
         if let session = captureSession {
@@ -154,6 +158,10 @@ class CameraService: NSObject {
     func pauseCapturing() {
         guard isRunning, !isPaused else { return }
         isPaused = true
+        if let fireDate = scheduledFireDate {
+            let remaining = fireDate.timeIntervalSinceNow
+            pausedRemainingInterval = max(0, remaining)
+        }
         captureTimer?.invalidate()
         captureTimer = nil
     }
@@ -161,16 +169,28 @@ class CameraService: NSObject {
     func resumeCapturing() {
         guard isRunning, isPaused else { return }
         isPaused = false
-        scheduleNextCapture()
+        if let remaining = pausedRemainingInterval {
+            pausedRemainingInterval = nil
+            scheduleCapture(after: remaining)
+        } else {
+            scheduleNextCapture()
+        }
     }
 
     private func scheduleNextCapture() {
+        let interval = currentMode.randomInterval()
+        scheduleCapture(after: interval)
+    }
+
+    private func scheduleCapture(after interval: TimeInterval) {
         guard isRunning, !isPaused, !isSimulator else { return }
         captureTimer?.invalidate()
-        let interval = currentMode.randomInterval()
-        let timer = Timer(timeInterval: interval, repeats: false) { [weak self] _ in
+        let effectiveInterval = max(0.1, interval)
+        scheduledFireDate = Date().addingTimeInterval(effectiveInterval)
+        let timer = Timer(timeInterval: effectiveInterval, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
-                guard let self, self.isRunning else { return }
+                guard let self, self.isRunning, !self.isPaused else { return }
+                self.scheduledFireDate = nil
                 self.capturePhoto()
                 self.scheduleNextCapture()
             }
