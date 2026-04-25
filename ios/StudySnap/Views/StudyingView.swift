@@ -37,18 +37,20 @@ struct StudyingView: View {
                 portraitLayout
             }
         }
-        .overlay(alignment: .bottomTrailing) {
+        .overlay(alignment: isLandscape ? .topLeading : .bottomTrailing) {
             if showMiniPreview {
                 miniPreviewCard
-                    .padding(.trailing, 16)
-                    .padding(.bottom, 180)
+                    .padding(.leading, isLandscape ? 16 : 0)
+                    .padding(.top, isLandscape ? 16 : 0)
+                    .padding(.trailing, isLandscape ? 0 : 16)
+                    .padding(.bottom, isLandscape ? 0 : 180)
                     .transition(.asymmetric(
-                        insertion: .scale(scale: 0.6, anchor: .bottomTrailing).combined(with: .opacity),
-                        removal: .scale(scale: 0.6, anchor: .bottomTrailing).combined(with: .opacity)
+                        insertion: .scale(scale: 0.6, anchor: isLandscape ? .topLeading : .bottomTrailing).combined(with: .opacity),
+                        removal: .scale(scale: 0.6, anchor: isLandscape ? .topLeading : .bottomTrailing).combined(with: .opacity)
                     ))
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .onAppear {
             startTime = .now
             accumulatedTime = 0
@@ -288,8 +290,8 @@ struct StudyingView: View {
 
     @ViewBuilder
     private var miniPreviewCard: some View {
-        let width: CGFloat = 150
-        let height: CGFloat = width * 16 / 9
+        let width: CGFloat = isLandscape ? 200 : 150
+        let height: CGFloat = isLandscape ? width * 9 / 16 : width * 16 / 9
         ZStack {
             Color.black
             #if targetEnvironment(simulator)
