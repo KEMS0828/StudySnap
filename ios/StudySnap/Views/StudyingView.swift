@@ -13,6 +13,7 @@ struct StudyingView: View {
     private let freeDailyLimit: TimeInterval = 1 * 3600
 
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var elapsedTime: TimeInterval = 0
     @State private var timer: Timer?
     @State private var startTime: Date = .now
@@ -26,122 +27,14 @@ struct StudyingView: View {
     @State private var isPaused = false
     @State private var showMiniPreview = false
 
+    private var isLandscape: Bool { verticalSizeClass == .compact }
+
     var body: some View {
         ZStack {
-            VStack(spacing: 0) {
-                HStack {
-                    Spacer()
-                    Menu {
-                        Button {
-                            withAnimation(.spring(duration: 0.4)) {
-                                showMiniPreview = true
-                            }
-                            cameraService.startLivePreview()
-                        } label: {
-                            Label("写りを確認", systemImage: "camera.viewfinder")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.title3.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 44, height: 44)
-                            .background(Color(.secondarySystemGroupedBackground), in: .circle)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 8)
-
-                Spacer()
-
-                VStack(spacing: 32) {
-                    VStack(spacing: 8) {
-                        Image(systemName: isPaused ? "pause.circle.fill" : "book.and.wrench.fill")
-                            .font(.system(size: 44))
-                            .foregroundStyle(isPaused ? Color.orange : Color.accentColor)
-                            .symbolEffect(.pulse, options: .repeating, isActive: !isPaused)
-                            .contentTransition(.symbolEffect(.replace))
-
-                        Text(isPaused ? "一時停止中" : "勉強中...")
-                            .font(.title3)
-                            .foregroundStyle(isPaused ? .orange : .secondary)
-                            .contentTransition(.numericText())
-                    }
-
-                    Text(formattedTime)
-                        .font(.system(size: 64, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
-                        .opacity(isPaused ? 0.5 : 1.0)
-
-                    HStack(spacing: 24) {
-                        VStack(spacing: 4) {
-                            Image(systemName: "camera.fill")
-                                .font(.title3)
-                                .foregroundStyle(.secondary)
-                            Text("\(photoCount)")
-                                .font(.title2.bold())
-                            Text("撮影枚数")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
-
-                        VStack(spacing: 4) {
-                            Image(systemName: mode.icon)
-                                .font(.title3)
-                                .foregroundStyle(.secondary)
-                            Text(mode.title)
-                                .font(.title3.bold())
-                            Text("モード")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
-                    }
-                    .padding(.horizontal)
-                }
-
-                Spacer()
-
-                VStack(spacing: 12) {
-                    Button {
-                        withAnimation(.spring(duration: 0.35)) {
-                            togglePause()
-                        }
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: isPaused ? "play.fill" : "pause.fill")
-                            Text(isPaused ? "再開" : "一時停止")
-                                .font(.headline)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(isPaused ? .blue : .orange)
-                    .controlSize(.large)
-
-                    Button {
-                        showStopConfirm = true
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "stop.fill")
-                            Text("勉強終了")
-                                .font(.headline)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 4)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.red)
-                    .controlSize(.large)
-                }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 32)
+            if isLandscape {
+                landscapeLayout
+            } else {
+                portraitLayout
             }
         }
         .overlay(alignment: .bottomTrailing) {
@@ -227,6 +120,169 @@ struct StudyingView: View {
                 stopStudy()
             }
             Button("キャンセル", role: .cancel) {}
+        }
+    }
+
+    private var menuButton: some View {
+        Menu {
+            Button {
+                withAnimation(.spring(duration: 0.4)) {
+                    showMiniPreview = true
+                }
+                cameraService.startLivePreview()
+            } label: {
+                Label("写りを確認", systemImage: "camera.viewfinder")
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .frame(width: 44, height: 44)
+                .background(Color(.secondarySystemGroupedBackground), in: .circle)
+        }
+    }
+
+    private var statusHeader: some View {
+        VStack(spacing: 8) {
+            Image(systemName: isPaused ? "pause.circle.fill" : "book.and.wrench.fill")
+                .font(.system(size: isLandscape ? 36 : 44))
+                .foregroundStyle(isPaused ? Color.orange : Color.accentColor)
+                .symbolEffect(.pulse, options: .repeating, isActive: !isPaused)
+                .contentTransition(.symbolEffect(.replace))
+
+            Text(isPaused ? "一時停止中" : "勉強中...")
+                .font(.title3)
+                .foregroundStyle(isPaused ? .orange : .secondary)
+                .contentTransition(.numericText())
+        }
+    }
+
+    private var timerText: some View {
+        Text(formattedTime)
+            .font(.system(size: isLandscape ? 48 : 64, weight: .bold, design: .rounded))
+            .monospacedDigit()
+            .contentTransition(.numericText())
+            .opacity(isPaused ? 0.5 : 1.0)
+    }
+
+    private var statsCards: some View {
+        HStack(spacing: 16) {
+            VStack(spacing: 4) {
+                Image(systemName: "camera.fill")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+                Text("\(photoCount)")
+                    .font(.title2.bold())
+                Text("撮影枚数")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+
+            VStack(spacing: 4) {
+                Image(systemName: mode.icon)
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+                Text(mode.title)
+                    .font(.title3.bold())
+                Text("モード")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+        }
+    }
+
+    private var actionButtons: some View {
+        VStack(spacing: 12) {
+            Button {
+                withAnimation(.spring(duration: 0.35)) {
+                    togglePause()
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: isPaused ? "play.fill" : "pause.fill")
+                    Text(isPaused ? "再開" : "一時停止")
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(isPaused ? .blue : .orange)
+            .controlSize(.large)
+
+            Button {
+                showStopConfirm = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "stop.fill")
+                    Text("勉強終了")
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.red)
+            .controlSize(.large)
+        }
+    }
+
+    private var portraitLayout: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                menuButton
+            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+
+            Spacer()
+
+            VStack(spacing: 32) {
+                statusHeader
+                timerText
+                statsCards
+                    .padding(.horizontal)
+            }
+
+            Spacer()
+
+            actionButtons
+                .padding(.horizontal, 24)
+                .padding(.bottom, 32)
+        }
+    }
+
+    private var landscapeLayout: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                menuButton
+            }
+            .padding(.horizontal)
+            .padding(.top, 4)
+
+            HStack(alignment: .center, spacing: 24) {
+                VStack(spacing: 16) {
+                    statusHeader
+                    timerText
+                }
+                .frame(maxWidth: .infinity)
+
+                VStack(spacing: 12) {
+                    statsCards
+                    actionButtons
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
         }
     }
 

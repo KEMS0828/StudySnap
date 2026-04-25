@@ -9,6 +9,8 @@ struct SettingsView: View {
     @State private var showLeaveConfirm = false
     @State private var showSignOutConfirm = false
     @State private var showTransferAdmin = false
+    @State private var showTransferAdminOnly = false
+    @State private var showTransferAdminSuccess = false
     @State private var showEditProfile = false
     @State private var showCancelRequest = false
     @State private var showLastMemberLeave = false
@@ -91,6 +93,14 @@ struct SettingsView: View {
                                             .padding(.vertical, 2)
                                             .background(.red, in: Capsule())
                                     }
+                                }
+                            }
+
+                            if group.memberIds.count > 1 {
+                                Button {
+                                    showTransferAdminOnly = true
+                                } label: {
+                                    Label("管理者権限を譲渡", systemImage: "person.2.badge.gearshape")
                                 }
                             }
                         }
@@ -454,7 +464,20 @@ struct SettingsView: View {
                 Text("申請を取り消すとグループへの参加待ちが解除されます")
             }
             .sheet(isPresented: $showTransferAdmin) {
-                TransferAdminView(dataStore: dataStore, isPresented: $showTransferAdmin)
+                TransferAdminView(dataStore: dataStore, isPresented: $showTransferAdmin, leaveAfterTransfer: true)
+            }
+            .sheet(isPresented: $showTransferAdminOnly) {
+                TransferAdminView(
+                    dataStore: dataStore,
+                    isPresented: $showTransferAdminOnly,
+                    leaveAfterTransfer: false,
+                    onTransferred: { showTransferAdminSuccess = true }
+                )
+            }
+            .alert("管理者権限を譲渡しました", isPresented: $showTransferAdminSuccess) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("これより、あなたは一般メンバーとしてグループに残ります。")
             }
             .sheet(isPresented: $showEditProfile) {
                 ProfileEditView(dataStore: dataStore, isPresented: $showEditProfile)
@@ -758,13 +781,17 @@ struct PendingMemberRow: View {
 struct TransferAdminView: View {
     let dataStore: DataStore
     @Binding var isPresented: Bool
+    var leaveAfterTransfer: Bool = true
+    var onTransferred: (() -> Void)? = nil
     @State private var members: [String: UserProfile] = [:]
 
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    Text("管理者権限を譲渡するメンバーを選んでください。譲渡後にグループを脱退できます。")
+                    Text(leaveAfterTransfer
+                         ? "管理者権限を譲渡するメンバーを選んでください。譲渡後にグループを脱退できます。"
+                         : "管理者権限を譲渡するメンバーを選んでください。譲渡後もあなたはグループに残ります。")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -775,8 +802,11 @@ struct TransferAdminView: View {
                         let member = members[memberId]
                         Button {
                             dataStore.transferAdmin(to: memberId)
-                            dataStore.leaveGroup()
+                            if leaveAfterTransfer {
+                                dataStore.leaveGroup()
+                            }
                             isPresented = false
+                            onTransferred?()
                         } label: {
                             HStack(spacing: 12) {
                                 ProfileAvatarView(
@@ -793,7 +823,7 @@ struct TransferAdminView: View {
                     Text("メンバー")
                 }
             }
-            .navigationTitle("管理者権限の譲渡")
+            .navigationTitle(leaveAfterTransfer ? "管理者権限の譲渡" : "管理者権限を譲渡")
             .navigationBarTitleDisplayMode(.inline)
             .task {
                 let otherIds = dataStore.currentGroup?.memberIds.filter { $0 != dataStore.currentUser?.id } ?? []
