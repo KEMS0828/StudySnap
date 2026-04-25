@@ -33,17 +33,17 @@ nonisolated enum StudyMode: String, CaseIterable, Identifiable, Codable, Sendabl
 
     var minInterval: TimeInterval {
         switch self {
-        case .shortBreak: return 180
-        case .normal: return 600
-        case .longSession: return 1200
+        case .shortBreak: return 1
+        case .normal: return 1
+        case .longSession: return 1
         }
     }
 
     var maxInterval: TimeInterval {
         switch self {
-        case .shortBreak: return 420
-        case .normal: return 1200
-        case .longSession: return 2400
+        case .shortBreak: return 599
+        case .normal: return 1799
+        case .longSession: return 3599
         }
     }
 
@@ -52,8 +52,6 @@ nonisolated enum StudyMode: String, CaseIterable, Identifiable, Codable, Sendabl
     }
 
     func randomInterval() -> TimeInterval {
-        let avg = (minInterval + maxInterval) / 2.0
-        let actualMax = avg * 2.0 - 1.0
-        return TimeInterval.random(in: 1.0...actualMax)
+        TimeInterval.random(in: minInterval...maxInterval)
     }
 }
