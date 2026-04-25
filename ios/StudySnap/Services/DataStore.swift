@@ -542,10 +542,11 @@ class DataStore {
 
             do {
                 if let session = try await cloud.getSession(byId: mutablePost.sessionId) {
+                    let approvedCount = min(mutablePost.photoApproved.filter { $0 }.count, mutablePost.photoUrls.count)
                     let sessionFields: [String: Any] = [
                         "isApproved": true,
                         "approvedBy": user.name,
-                        "approvedPhotoCount": mutablePost.photoApproved.count
+                        "approvedPhotoCount": approvedCount
                     ]
                     try await cloud.updateSessionApprovalFields(mutablePost.sessionId, fields: sessionFields)
 
@@ -607,8 +608,9 @@ class DataStore {
 
             do {
                 if let session = try await cloud.getSession(byId: mutablePost.sessionId) {
+                    let approvedCount = min(mutablePost.photoApproved.filter { $0 }.count, mutablePost.photoUrls.count)
                     var sessionFields: [String: Any] = [
-                        "approvedPhotoCount": session.approvedPhotoCount + 1
+                        "approvedPhotoCount": approvedCount
                     ]
                     if allApproved {
                         sessionFields["isApproved"] = true
