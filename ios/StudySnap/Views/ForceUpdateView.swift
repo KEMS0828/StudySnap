@@ -7,6 +7,9 @@ struct ForceUpdateView: View {
 
     var body: some View {
         ZStack {
+            Color(.systemBackground)
+                .ignoresSafeArea()
+
             LinearGradient(
                 colors: [
                     Color.blue.opacity(0.12),
