@@ -42,8 +42,9 @@ struct TimelineView: View {
     @State private var showDraftOverwriteWarning = false
     @State private var showUploadError = false
     @State private var showPaywall = false
-    @State private var pendingQuickMessage: QuickMessage?
-    @State private var showSendConfirm = false
+    @State private var chatInputText: String = ""
+    @State private var showNGWordAlert = false
+    @FocusState private var chatInputFocused: Bool
     @State private var showLimitReachedAlert = false
     @State private var showApprovalError = false
     @State private var hasInitiallyScrolled = false
@@ -92,6 +93,11 @@ struct TimelineView: View {
             } message: {
                 Text(dataStore.approvalError ?? "")
             }
+            .alert("送信できません", isPresented: $showNGWordAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("不適切な表現が含まれているため送信できません。")
+            }
             .alert("前回の下書きがあります", isPresented: $showDraftOverwriteWarning) {
                 Button("新たに記録する", role: .destructive) {
                     dataStore.deleteDraft()
@@ -100,16 +106,6 @@ struct TimelineView: View {
                 Button("キャンセル", role: .cancel) {}
             } message: {
                 Text("新たに記録すると前回の下書きは消去されます")
-            }
-            .alert("メッセージを送信", isPresented: $showSendConfirm, presenting: pendingQuickMessage) { quick in
-                Button("送信") {
-                    withAnimation(.spring(duration: 0.35, bounce: 0.3)) {
-                        dataStore.sendChatMessage(quick)
-                    }
-                }
-                Button("キャンセル", role: .cancel) {}
-            } message: { quick in
-                Text("\(quick.rawValue)を送信します。")
             }
     }
 
@@ -368,7 +364,7 @@ struct TimelineView: View {
                 }
             }
 
-            quickMessageBar
+            chatInputBar
         }
     }
 
@@ -441,29 +437,53 @@ struct TimelineView: View {
         .padding(.bottom, 20)
     }
 
-    private var quickMessageBar: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                ForEach(QuickMessage.allCases, id: \.rawValue) { quick in
-                    Button {
-                        pendingQuickMessage = quick
-                        showSendConfirm = true
-                    } label: {
-                        Text(quick.rawValue)
-                            .font(.subheadline.weight(.medium))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 9)
-                            .background(.blue.opacity(0.12), in: Capsule())
-                            .foregroundStyle(.blue)
-                    }
-
-                }
+    private var chatInputBar: some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            HStack(alignment: .bottom, spacing: 6) {
+                TextField("メッセージを入力", text: $chatInputText, axis: .vertical)
+                    .textFieldStyle(.plain)
+                    .font(.body)
+                    .lineLimit(1...5)
+                    .focused($chatInputFocused)
+                    .submitLabel(.send)
+                    .onSubmit { trySendChat() }
             }
-            .padding(.vertical, 10)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(Color(.secondarySystemBackground), in: .capsule)
+
+            Button {
+                trySendChat()
+            } label: {
+                Image(systemName: "paperplane.fill")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(canSendChat ? Color.blue : Color.gray.opacity(0.4), in: .circle)
+            }
+            .disabled(!canSendChat)
+            .sensoryFeedback(.impact(weight: .light), trigger: dataStore.chatMessages.count)
         }
-        .contentMargins(.horizontal, 16)
-        .scrollIndicators(.hidden)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .background(.bar)
+    }
+
+    private var canSendChat: Bool {
+        !chatInputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func trySendChat() {
+        let trimmed = chatInputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if NGWordFilter.containsNGWord(in: trimmed) {
+            showNGWordAlert = true
+            return
+        }
+        withAnimation(.spring(duration: 0.35, bounce: 0.3)) {
+            _ = dataStore.sendChatText(trimmed)
+        }
+        chatInputText = ""
     }
 
     private var canStartStudy: Bool {

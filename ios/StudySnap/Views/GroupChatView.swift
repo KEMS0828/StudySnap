@@ -5,6 +5,9 @@ struct GroupChatView: View {
     private var blockService: BlockService { BlockService.shared }
     @Environment(\.dismiss) private var dismiss
     @State private var lastSentId: String?
+    @State private var chatInputText: String = ""
+    @State private var showNGWordAlert = false
+    @FocusState private var chatInputFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -48,7 +51,12 @@ struct GroupChatView: View {
 
                 Divider()
 
-                quickMessageBar
+                chatInputBar
+            }
+            .alert("送信できません", isPresented: $showNGWordAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("不適切な表現が含まれているため送信できません。")
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("チャット")
@@ -83,29 +91,51 @@ struct GroupChatView: View {
         }
     }
 
-    private var quickMessageBar: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                ForEach(QuickMessage.allCases, id: \.rawValue) { quick in
-                    Button {
-                        withAnimation(.spring(duration: 0.35, bounce: 0.3)) {
-                            dataStore.sendChatMessage(quick)
-                        }
-                    } label: {
-                        Text(quick.rawValue)
-                            .font(.subheadline.weight(.medium))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 9)
-                            .background(.blue.opacity(0.12), in: Capsule())
-                            .foregroundStyle(.blue)
-                    }
-                    .sensoryFeedback(.impact(weight: .light), trigger: dataStore.chatMessages.count)
-                }
+    private var chatInputBar: some View {
+        HStack(alignment: .bottom, spacing: 8) {
+            HStack(alignment: .bottom, spacing: 6) {
+                TextField("メッセージを入力", text: $chatInputText, axis: .vertical)
+                    .textFieldStyle(.plain)
+                    .font(.body)
+                    .lineLimit(1...5)
+                    .focused($chatInputFocused)
             }
-            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 9)
+            .background(Color(.secondarySystemBackground), in: .capsule)
+
+            Button {
+                trySendChat()
+            } label: {
+                Image(systemName: "paperplane.fill")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                    .frame(width: 36, height: 36)
+                    .background(canSendChat ? Color.blue : Color.gray.opacity(0.4), in: .circle)
+            }
+            .disabled(!canSendChat)
+            .sensoryFeedback(.impact(weight: .light), trigger: dataStore.chatMessages.count)
         }
-        .contentMargins(.horizontal, 16)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
         .background(.bar)
+    }
+
+    private var canSendChat: Bool {
+        !chatInputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func trySendChat() {
+        let trimmed = chatInputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if NGWordFilter.containsNGWord(in: trimmed) {
+            showNGWordAlert = true
+            return
+        }
+        withAnimation(.spring(duration: 0.35, bounce: 0.3)) {
+            _ = dataStore.sendChatText(trimmed)
+        }
+        chatInputText = ""
     }
 }
 

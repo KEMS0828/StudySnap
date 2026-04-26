@@ -1048,18 +1048,26 @@ class DataStore {
     }
 
     func sendChatMessage(_ quickMessage: QuickMessage) {
-        guard let user = currentUser, let group = currentGroup else { return }
+        sendChatText(quickMessage.rawValue)
+    }
+
+    @discardableResult
+    func sendChatText(_ text: String) -> Bool {
+        guard let user = currentUser, let group = currentGroup else { return false }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return false }
         let message = ChatMessage(
             groupId: group.id,
             userId: user.id,
             userName: user.name,
             userPhotoUrl: user.profilePhotoUrl,
-            message: quickMessage.rawValue
+            message: String(trimmed.prefix(200))
         )
         chatMessages.append(message)
         Task {
             try? await cloud.saveChatMessage(message)
         }
+        return true
     }
 
     private func subjectBreakdown(from sessions: [StudySession]) -> [(String, TimeInterval)] {
