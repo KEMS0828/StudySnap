@@ -362,6 +362,10 @@ struct TimelineView: View {
                     hasInitiallyScrolled = false
                     needsScrollToBottom = true
                 }
+                .scrollDismissesKeyboard(.interactively)
+                .onTapGesture {
+                    chatInputFocused = false
+                }
             }
 
             chatInputBar
@@ -439,18 +443,32 @@ struct TimelineView: View {
 
     private var chatInputBar: some View {
         HStack(alignment: .bottom, spacing: 8) {
-            HStack(alignment: .bottom, spacing: 6) {
-                TextField("メッセージを入力", text: $chatInputText, axis: .vertical)
-                    .textFieldStyle(.plain)
-                    .font(.body)
-                    .lineLimit(1...5)
-                    .focused($chatInputFocused)
-                    .submitLabel(.send)
-                    .onSubmit { trySendChat() }
+            VStack(alignment: .trailing, spacing: 2) {
+                HStack(alignment: .bottom, spacing: 6) {
+                    TextField("メッセージを入力", text: $chatInputText, axis: .vertical)
+                        .textFieldStyle(.plain)
+                        .font(.body)
+                        .lineLimit(1...5)
+                        .focused($chatInputFocused)
+                        .submitLabel(.send)
+                        .onSubmit { trySendChat() }
+                        .onChange(of: chatInputText) { _, newValue in
+                            if newValue.count > Self.chatCharLimit {
+                                chatInputText = String(newValue.prefix(Self.chatCharLimit))
+                            }
+                        }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .background(Color(.secondarySystemBackground), in: .capsule)
+
+                if chatInputFocused || !chatInputText.isEmpty {
+                    Text("\(chatInputText.count) / \(Self.chatCharLimit)")
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(chatInputText.count >= Self.chatCharLimit ? Color.red : (chatInputText.count >= Self.chatCharLimit - 10 ? Color.orange : Color.secondary))
+                        .padding(.trailing, 8)
+                }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 9)
-            .background(Color(.secondarySystemBackground), in: .capsule)
 
             Button {
                 trySendChat()
@@ -469,8 +487,11 @@ struct TimelineView: View {
         .background(.bar)
     }
 
+    private static let chatCharLimit: Int = 100
+
     private var canSendChat: Bool {
-        !chatInputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let trimmed = chatInputText.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && chatInputText.count <= Self.chatCharLimit
     }
 
     private func trySendChat() {
