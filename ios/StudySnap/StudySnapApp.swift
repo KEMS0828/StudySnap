@@ -62,6 +62,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 struct StudySnapApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @State private var authService: AuthenticationService = AuthenticationService()
+    @State private var versionService: AppVersionService = AppVersionService()
 
     @AppStorage("appTheme") private var appTheme: AppTheme = .light
 
@@ -70,10 +71,17 @@ struct StudySnapApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView(authService: authService)
+            ZStack {
+                ContentView(authService: authService)
+                if case let .updateRequired(latest, current) = versionService.status {
+                    ForceUpdateView(latestVersion: latest, currentVersion: current)
+                        .transition(.opacity)
+                }
+            }
                 .preferredColorScheme(appTheme.colorScheme)
                 .task {
                     authService.configureIfNeeded()
+                    await versionService.check()
                 }
                 .onOpenURL { url in
                     guard FirebaseApp.app() != nil else { return }
