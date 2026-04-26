@@ -126,7 +126,7 @@ struct GroupChatView: View {
             Button {
                 trySendChat()
             } label: {
-                Image(systemName: "paperplane.fill")
+                Image(systemName: "arrow.up")
                     .font(.subheadline.bold())
                     .foregroundStyle(.white)
                     .frame(width: 36, height: 36)
