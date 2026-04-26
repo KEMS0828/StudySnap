@@ -803,6 +803,13 @@ struct PostCardView: View {
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
                         .background(.blue, in: Capsule())
+                } else if post.photoUrls.isEmpty {
+                    Label("写真なし", systemImage: "camera.slash.fill")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(.gray, in: Capsule())
                 } else {
                     Text("未承認")
                         .font(.caption.bold())
@@ -844,8 +851,6 @@ struct PostCardView: View {
                 }
                 .contentMargins(.horizontal, 0)
                 .scrollIndicators(.hidden)
-            } else if isOtherUser && !post.isApproved {
-                postApprovalButton
             }
 
             if !post.subject.isEmpty {
