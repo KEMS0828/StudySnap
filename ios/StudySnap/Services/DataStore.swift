@@ -168,12 +168,17 @@ class DataStore {
         guard var user = currentUser else { return }
         var group = StudyGroup(name: name, groupDescription: description, adminId: user.id, joinMethod: joinMethod)
 
+        timelinePosts = []
+        chatMessages = []
+
         Task {
             do {
                 if let data = photoData {
                     let url = try? await cloud.uploadPhoto(data, path: "communities/\(group.id)/cover/photo.jpg")
                     group.groupPhotoUrl = url
                 }
+                try? await cloud.deletePostsForGroup(group.id)
+                try? await cloud.deleteAllChatMessages(groupId: group.id)
                 try await cloud.saveGroup(group)
                 user.currentGroupId = group.id
                 user.isAdmin = true
@@ -181,6 +186,8 @@ class DataStore {
                 currentUser = user
                 currentGroup = group
                 await loadGroups()
+                await loadPosts()
+                await loadChatMessages()
             } catch {
                 generalError = "グループの作成に失敗しました: \(error.localizedDescription)"
             }
@@ -239,9 +246,12 @@ class DataStore {
         currentUser = user
         currentGroup = nil
         timelinePosts = []
+        chatMessages = []
 
         Task {
             await cloud.refreshAuthTokenOnce()
+            try? await cloud.deletePostsForGroup(group.id)
+            try? await cloud.deleteAllChatMessages(groupId: group.id)
             try? await cloud.deleteGroup(group.id)
             try? await cloud.saveUserWithRetry(user)
             await loadGroups()
