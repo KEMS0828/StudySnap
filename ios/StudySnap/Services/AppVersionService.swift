@@ -14,6 +14,10 @@ final class AppVersionService {
     var status: UpdateStatus = .unknown
 
     func check() async {
+        #if DEBUG
+        self.status = .upToDate
+        return
+        #else
         guard let current = Self.currentVersion() else { return }
         guard let latest = await Self.fetchLatestVersion() else { return }
 
@@ -22,6 +26,7 @@ final class AppVersionService {
         } else {
             self.status = .upToDate
         }
+        #endif
     }
 
     static func currentVersion() -> String? {
