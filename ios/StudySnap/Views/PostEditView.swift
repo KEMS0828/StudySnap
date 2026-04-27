@@ -395,8 +395,23 @@ struct PostEditView: View {
 
     private func photoAspectRatio(for photo: EditablePhoto) -> CGFloat {
         guard let uiImage = UIImage(data: photo.originalData) else { return 4.0 / 3.0 }
-        let w = uiImage.size.width
-        let h = uiImage.size.height
+        let rawW: CGFloat
+        let rawH: CGFloat
+        if let cg = uiImage.cgImage {
+            rawW = CGFloat(cg.width)
+            rawH = CGFloat(cg.height)
+        } else {
+            rawW = uiImage.size.width
+            rawH = uiImage.size.height
+        }
+        let isRotated: Bool = {
+            switch uiImage.imageOrientation {
+            case .left, .leftMirrored, .right, .rightMirrored: return true
+            default: return false
+            }
+        }()
+        let w = isRotated ? rawH : rawW
+        let h = isRotated ? rawW : rawH
         guard h > 0 else { return 4.0 / 3.0 }
         return w / h
     }
