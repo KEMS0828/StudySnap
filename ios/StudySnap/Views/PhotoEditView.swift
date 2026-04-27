@@ -323,11 +323,11 @@ struct PhotoEditView: View {
                                     Image(uiImage: uiImage)
                                         .resizable()
                                         .aspectRatio(contentMode: .fill)
-                                        .frame(width: 80, height: 80)
-                                        .clipShape(.rect(cornerRadius: 10))
+                                        .frame(width: 60, height: 60)
+                                        .clipShape(.rect(cornerRadius: 8))
                                         .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(index == selectedPhotoIndex ? Color.accentColor : .clear, lineWidth: 3)
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(index == selectedPhotoIndex ? Color.accentColor : .clear, lineWidth: 2.5)
                                         )
                                 }
                             }
@@ -337,11 +337,11 @@ struct PhotoEditView: View {
                                         photoIndexToDelete = index
                                     } label: {
                                         Image(systemName: "xmark.circle.fill")
-                                            .font(.system(size: 20))
+                                            .font(.system(size: 18))
                                             .symbolRenderingMode(.palette)
                                             .foregroundStyle(.white, .red)
                                     }
-                                    .offset(x: 6, y: -6)
+                                    .offset(x: 5, y: -5)
                                 }
                             }
                         }
@@ -371,7 +371,7 @@ struct PhotoEditView: View {
                     }
                 )
                 .aspectRatio(canvasAspect, contentMode: .fit)
-                .frame(maxHeight: 440)
+                .frame(maxHeight: canvasAspect < 1 ? 340 : 440)
                 .clipShape(.rect(cornerRadius: 16))
                 .id(editedPhotos[selectedPhotoIndex].id)
             }
