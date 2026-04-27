@@ -31,13 +31,20 @@ struct PostConfirmationView: View {
                         ForEach(Array(photos.enumerated()), id: \.offset) { index, photoData in
                             if let uiImage = UIImage(data: photoData) {
                                 let aspect = uiImage.size.width / max(uiImage.size.height, 1)
+                                let targetArea: CGFloat = 150 * 200
+                                let rawW = sqrt(targetArea * aspect)
+                                let rawH = sqrt(targetArea / aspect)
+                                let cardW = min(max(rawW, 120), 220)
+                                let cardH = min(max(rawH, 120), 220)
+                                let displayAspect = cardW / cardH
                                 VStack(spacing: 4) {
-                                    Color(.secondarySystemGroupedBackground)
-                                        .aspectRatio(aspect, contentMode: .fit)
+                                    Color(.secondarySystemBackground)
+                                        .aspectRatio(displayAspect, contentMode: .fit)
+                                        .frame(maxWidth: .infinity, maxHeight: 360)
                                         .overlay {
                                             Image(uiImage: uiImage)
                                                 .resizable()
-                                                .aspectRatio(contentMode: .fill)
+                                                .aspectRatio(contentMode: .fit)
                                                 .allowsHitTesting(false)
                                         }
                                         .clipShape(.rect(cornerRadius: 12))

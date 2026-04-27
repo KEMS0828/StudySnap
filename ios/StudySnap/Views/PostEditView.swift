@@ -174,22 +174,25 @@ struct PostEditView: View {
 
             if selectedPhotoIndex < editedPhotos.count {
                 let canvasAspect = photoAspectRatio(for: editedPhotos[selectedPhotoIndex])
-                PhotoCanvas(
-                    photo: editedPhotos[selectedPhotoIndex],
-                    selectedTool: selectedTool,
-                    brushSize: brushSize,
-                    mosaicIntensity: mosaicIntensity,
-                    penColor: penColor,
-                    selectedStamp: selectedStamp,
-                    stampSize: stampSize,
-                    onUpdate: { updatedPhoto in
-                        editedPhotos[selectedPhotoIndex] = updatedPhoto
+                Color(.secondarySystemBackground)
+                    .aspectRatio(canvasAspect, contentMode: .fit)
+                    .frame(maxHeight: 380)
+                    .overlay {
+                        PhotoCanvas(
+                            photo: editedPhotos[selectedPhotoIndex],
+                            selectedTool: selectedTool,
+                            brushSize: brushSize,
+                            mosaicIntensity: mosaicIntensity,
+                            penColor: penColor,
+                            selectedStamp: selectedStamp,
+                            stampSize: stampSize,
+                            onUpdate: { updatedPhoto in
+                                editedPhotos[selectedPhotoIndex] = updatedPhoto
+                            }
+                        )
                     }
-                )
-                .aspectRatio(canvasAspect, contentMode: .fit)
-                .frame(maxHeight: 440)
-                .clipShape(.rect(cornerRadius: 16))
-                .id(editedPhotos[selectedPhotoIndex].id)
+                    .clipShape(.rect(cornerRadius: 16))
+                    .id(editedPhotos[selectedPhotoIndex].id)
             }
 
             toolBar
