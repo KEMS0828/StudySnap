@@ -174,22 +174,37 @@ struct PostEditView: View {
 
             if selectedPhotoIndex < editedPhotos.count {
                 let canvasAspect = photoAspectRatio(for: editedPhotos[selectedPhotoIndex])
-                PhotoCanvas(
-                    photo: editedPhotos[selectedPhotoIndex],
-                    selectedTool: selectedTool,
-                    brushSize: brushSize,
-                    mosaicIntensity: mosaicIntensity,
-                    penColor: penColor,
-                    selectedStamp: selectedStamp,
-                    stampSize: stampSize,
-                    onUpdate: { updatedPhoto in
-                        editedPhotos[selectedPhotoIndex] = updatedPhoto
+                let maxCanvasHeight: CGFloat = 380
+                GeometryReader { proxy in
+                    let availableW = proxy.size.width
+                    let heightFromWidth = availableW / canvasAspect
+                    let finalH = min(maxCanvasHeight, heightFromWidth)
+                    let finalW = finalH * canvasAspect
+                    HStack {
+                        Spacer(minLength: 0)
+                        PhotoCanvas(
+                            photo: editedPhotos[selectedPhotoIndex],
+                            selectedTool: selectedTool,
+                            brushSize: brushSize,
+                            mosaicIntensity: mosaicIntensity,
+                            penColor: penColor,
+                            selectedStamp: selectedStamp,
+                            stampSize: stampSize,
+                            onUpdate: { updatedPhoto in
+                                editedPhotos[selectedPhotoIndex] = updatedPhoto
+                            }
+                        )
+                        .frame(width: finalW, height: finalH)
+                        .clipShape(.rect(cornerRadius: 16))
+                        .id(editedPhotos[selectedPhotoIndex].id)
+                        Spacer(minLength: 0)
                     }
-                )
-                .aspectRatio(canvasAspect, contentMode: .fit)
-                .frame(maxHeight: 380)
-                .clipShape(.rect(cornerRadius: 16))
-                .id(editedPhotos[selectedPhotoIndex].id)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
+                }
+                .frame(height: {
+                    let screenW = UIScreen.main.bounds.width - 32
+                    return min(maxCanvasHeight, screenW / canvasAspect)
+                }())
             }
 
             toolBar
