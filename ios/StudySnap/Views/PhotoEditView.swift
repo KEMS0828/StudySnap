@@ -372,6 +372,7 @@ struct PhotoEditView: View {
                 )
                 .aspectRatio(canvasAspect, contentMode: .fit)
                 .frame(maxHeight: 380)
+                .compositingGroup()
                 .clipShape(.rect(cornerRadius: 16))
                 .id(editedPhotos[selectedPhotoIndex].id)
             }
