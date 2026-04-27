@@ -11,6 +11,7 @@ struct PostEditView: View {
     @State private var selectedPhotoIndex: Int = 0
     @State private var selectedTool: EditTool = .pen
     @State private var brushSize: CGFloat = 30
+    @State private var mosaicIntensity: CGFloat = 10
     @State private var penColor: Color = .black
     @State private var selectedStamp: StampType = .star
     @State private var stampSize: CGFloat = 36
@@ -177,6 +178,7 @@ struct PostEditView: View {
                     photo: editedPhotos[selectedPhotoIndex],
                     selectedTool: selectedTool,
                     brushSize: brushSize,
+                    mosaicIntensity: mosaicIntensity,
                     penColor: penColor,
                     selectedStamp: selectedStamp,
                     stampSize: stampSize,
@@ -285,14 +287,25 @@ struct PostEditView: View {
                 }
 
             case .mosaic:
-                HStack {
-                    Image(systemName: "circle.fill")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                    Slider(value: $brushSize, in: 20...80)
-                    Image(systemName: "circle.fill")
-                        .font(.system(size: 22))
-                        .foregroundStyle(.secondary)
+                VStack(spacing: 10) {
+                    HStack {
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                        Slider(value: $brushSize, in: 20...80)
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Image(systemName: "squareshape.split.3x3")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                        Slider(value: $mosaicIntensity, in: 5...40)
+                        Image(systemName: "squareshape.split.2x2")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
             case .stamp:

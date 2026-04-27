@@ -67,19 +67,22 @@ nonisolated struct DrawingStroke: Sendable {
 nonisolated struct MosaicStroke: Sendable {
     let points: [CGPoint]
     let brushSize: CGFloat
+    var intensity: CGFloat = 10
 }
 
 nonisolated struct CodableMosaicStroke: Codable, Sendable {
     let points: [CodablePoint]
     let brushSize: CGFloat
+    let intensity: CGFloat?
 
     init(from stroke: MosaicStroke) {
         self.points = stroke.points.map { CodablePoint($0) }
         self.brushSize = stroke.brushSize
+        self.intensity = stroke.intensity
     }
 
     func toMosaicStroke() -> MosaicStroke {
-        MosaicStroke(points: points.map { $0.cgPoint }, brushSize: brushSize)
+        MosaicStroke(points: points.map { $0.cgPoint }, brushSize: brushSize, intensity: intensity ?? 10)
     }
 }
 
@@ -181,6 +184,7 @@ struct PhotoEditView: View {
     @State private var selectedPhotoIndex: Int = 0
     @State private var selectedTool: EditTool = .pen
     @State private var brushSize: CGFloat = 30
+    @State private var mosaicIntensity: CGFloat = 10
     @State private var penColor: Color = .black
     @State private var selectedStamp: StampType = .star
     @State private var stampSize: CGFloat = 36
@@ -358,6 +362,7 @@ struct PhotoEditView: View {
                     photo: editedPhotos[selectedPhotoIndex],
                     selectedTool: selectedTool,
                     brushSize: brushSize,
+                    mosaicIntensity: mosaicIntensity,
                     penColor: penColor,
                     selectedStamp: selectedStamp,
                     stampSize: stampSize,
@@ -470,14 +475,25 @@ struct PhotoEditView: View {
                 }
 
             case .mosaic:
-                HStack {
-                    Image(systemName: "circle.fill")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                    Slider(value: $brushSize, in: 20...80)
-                    Image(systemName: "circle.fill")
-                        .font(.system(size: 22))
-                        .foregroundStyle(.secondary)
+                VStack(spacing: 10) {
+                    HStack {
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                        Slider(value: $brushSize, in: 20...80)
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(.secondary)
+                    }
+                    HStack {
+                        Image(systemName: "squareshape.split.3x3")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                        Slider(value: $mosaicIntensity, in: 5...40)
+                        Image(systemName: "squareshape.split.2x2")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
             case .stamp:
@@ -633,13 +649,15 @@ struct PhotoCanvas: View {
     var photo: EditablePhoto
     let selectedTool: EditTool
     let brushSize: CGFloat
+    let mosaicIntensity: CGFloat
     let penColor: Color
     let selectedStamp: StampType
     let stampSize: CGFloat
     var onUpdate: (EditablePhoto) -> Void
 
     @State private var currentPath: [CGPoint] = []
-    @State private var pixelatedUIImage: UIImage?
+    @State private var pixelatedCache: [Int: UIImage] = [:]
+    @State private var canvasSize: CGSize = .zero
 
     var body: some View {
         GeometryReader { geometry in
@@ -654,7 +672,7 @@ struct PhotoCanvas: View {
                 Canvas { context, size in
                     drawMosaicStrokes(photo.mosaicStrokes, in: &context, size: size)
                     if !currentPath.isEmpty && selectedTool == .mosaic {
-                        let currentMosaic = MosaicStroke(points: currentPath, brushSize: brushSize)
+                        let currentMosaic = MosaicStroke(points: currentPath, brushSize: brushSize, intensity: mosaicIntensity)
                         drawMosaicStrokes([currentMosaic], in: &context, size: size)
                     }
 
@@ -700,7 +718,7 @@ struct PhotoCanvas: View {
                         guard !currentPath.isEmpty else { return }
                         var updated = photo
                         if selectedTool == .mosaic {
-                            updated.mosaicStrokes.append(MosaicStroke(points: currentPath, brushSize: brushSize))
+                            updated.mosaicStrokes.append(MosaicStroke(points: currentPath, brushSize: brushSize, intensity: mosaicIntensity))
                         } else {
                             updated.strokes.append(DrawingStroke(
                                 points: currentPath,
@@ -715,19 +733,38 @@ struct PhotoCanvas: View {
                     }
             )
             .onAppear {
-                generatePixelatedImage(size: geometry.size)
+                canvasSize = geometry.size
+                preparePixelatedImage(intensity: mosaicIntensity, size: geometry.size)
+                for stroke in photo.mosaicStrokes {
+                    preparePixelatedImage(intensity: stroke.intensity, size: geometry.size)
+                }
             }
             .onChange(of: geometry.size) { _, newSize in
-                generatePixelatedImage(size: newSize)
+                canvasSize = newSize
+                pixelatedCache.removeAll()
+                preparePixelatedImage(intensity: mosaicIntensity, size: newSize)
+                for stroke in photo.mosaicStrokes {
+                    preparePixelatedImage(intensity: stroke.intensity, size: newSize)
+                }
+            }
+            .onChange(of: mosaicIntensity) { _, newValue in
+                preparePixelatedImage(intensity: newValue, size: canvasSize)
             }
         }
     }
 
-    private func generatePixelatedImage(size: CGSize) {
+    private func intensityKey(_ intensity: CGFloat) -> Int {
+        Int(intensity.rounded())
+    }
+
+    private func preparePixelatedImage(intensity: CGFloat, size: CGSize) {
+        let key = intensityKey(intensity)
+        if pixelatedCache[key] != nil { return }
+        guard size.width > 0 else { return }
         guard let uiImage = UIImage(data: photo.originalData),
               let ciImage = CIImage(image: uiImage) else { return }
         let scale = uiImage.size.width / max(size.width, 1)
-        let pixelSize = max(10 * scale, 8)
+        let pixelSize = max(CGFloat(key) * scale, CGFloat(key) * 0.8)
         guard let filter = CIFilter(name: "CIPixellate") else { return }
         filter.setValue(ciImage, forKey: kCIInputImageKey)
         filter.setValue(pixelSize, forKey: kCIInputScaleKey)
@@ -735,7 +772,7 @@ struct PhotoCanvas: View {
         guard let output = filter.outputImage else { return }
         let ctx = CIContext()
         guard let cgImage = ctx.createCGImage(output, from: ciImage.extent) else { return }
-        pixelatedUIImage = UIImage(cgImage: cgImage)
+        pixelatedCache[key] = UIImage(cgImage: cgImage)
     }
 
     private var currentStrokeColor: Color {
@@ -785,21 +822,25 @@ struct PhotoCanvas: View {
     }
 
     private func drawMosaicStrokes(_ strokes: [MosaicStroke], in context: inout GraphicsContext, size: CGSize) {
-        guard !strokes.isEmpty, let pixImage = pixelatedUIImage else { return }
-        context.drawLayer { layerCtx in
-            var combinedPath = Path()
-            for stroke in strokes {
-                guard stroke.points.count > 0 else { continue }
-                var linePath = Path()
-                linePath.move(to: stroke.points[0])
-                for i in 1..<stroke.points.count {
-                    linePath.addLine(to: stroke.points[i])
+        guard !strokes.isEmpty else { return }
+        let grouped = Dictionary(grouping: strokes, by: { intensityKey($0.intensity) })
+        for (key, groupStrokes) in grouped {
+            guard let pixImage = pixelatedCache[key] else { continue }
+            context.drawLayer { layerCtx in
+                var combinedPath = Path()
+                for stroke in groupStrokes {
+                    guard stroke.points.count > 0 else { continue }
+                    var linePath = Path()
+                    linePath.move(to: stroke.points[0])
+                    for i in 1..<stroke.points.count {
+                        linePath.addLine(to: stroke.points[i])
+                    }
+                    let strokedPath = linePath.strokedPath(StrokeStyle(lineWidth: stroke.brushSize, lineCap: .round, lineJoin: .round))
+                    combinedPath.addPath(strokedPath)
                 }
-                let strokedPath = linePath.strokedPath(StrokeStyle(lineWidth: stroke.brushSize, lineCap: .round, lineJoin: .round))
-                combinedPath.addPath(strokedPath)
+                layerCtx.clip(to: combinedPath)
+                layerCtx.draw(Image(uiImage: pixImage).resizable(), in: CGRect(origin: .zero, size: size))
             }
-            layerCtx.clip(to: combinedPath)
-            layerCtx.draw(Image(uiImage: pixImage).resizable(), in: CGRect(origin: .zero, size: size))
         }
     }
 
@@ -841,20 +882,20 @@ struct PhotoCanvas: View {
     private func renderPhoto(photo: EditablePhoto, size: CGSize) -> Data? {
         guard let uiImage = UIImage(data: photo.originalData) else { return nil }
 
-        var pixelated: UIImage?
-        if !photo.mosaicStrokes.isEmpty {
-            if let ciImage = CIImage(image: uiImage) {
-                let scale = uiImage.size.width / max(size.width, 1)
-                let pixelSize = max(10 * scale, 8)
-                guard let filter = CIFilter(name: "CIPixellate") else { return nil }
+        var pixelatedByKey: [Int: UIImage] = [:]
+        if !photo.mosaicStrokes.isEmpty, let ciImage = CIImage(image: uiImage) {
+            let scale = uiImage.size.width / max(size.width, 1)
+            let ctx = CIContext()
+            let keys = Set(photo.mosaicStrokes.map { Int($0.intensity.rounded()) })
+            for key in keys {
+                let pixelSize = max(CGFloat(key) * scale, CGFloat(key) * 0.8)
+                guard let filter = CIFilter(name: "CIPixellate") else { continue }
                 filter.setValue(ciImage, forKey: kCIInputImageKey)
                 filter.setValue(pixelSize, forKey: kCIInputScaleKey)
                 filter.setValue(CIVector(x: 0, y: 0), forKey: kCIInputCenterKey)
-                if let output = filter.outputImage {
-                    let ctx = CIContext()
-                    if let cgImg = ctx.createCGImage(output, from: ciImage.extent) {
-                        pixelated = UIImage(cgImage: cgImg)
-                    }
+                if let output = filter.outputImage,
+                   let cgImg = ctx.createCGImage(output, from: ciImage.extent) {
+                    pixelatedByKey[key] = UIImage(cgImage: cgImg)
                 }
             }
         }
@@ -864,21 +905,25 @@ struct PhotoCanvas: View {
             let cgCtx = ctx.cgContext
             uiImage.draw(in: CGRect(origin: .zero, size: size))
 
-            if let pixelated, !photo.mosaicStrokes.isEmpty {
-                cgCtx.saveGState()
-                for stroke in photo.mosaicStrokes {
-                    guard !stroke.points.isEmpty else { continue }
-                    let mutablePath = CGMutablePath()
-                    mutablePath.move(to: stroke.points[0])
-                    for i in 1..<stroke.points.count {
-                        mutablePath.addLine(to: stroke.points[i])
+            if !photo.mosaicStrokes.isEmpty {
+                let grouped = Dictionary(grouping: photo.mosaicStrokes, by: { Int($0.intensity.rounded()) })
+                for (key, groupStrokes) in grouped {
+                    guard let pixelated = pixelatedByKey[key] else { continue }
+                    cgCtx.saveGState()
+                    for stroke in groupStrokes {
+                        guard !stroke.points.isEmpty else { continue }
+                        let mutablePath = CGMutablePath()
+                        mutablePath.move(to: stroke.points[0])
+                        for i in 1..<stroke.points.count {
+                            mutablePath.addLine(to: stroke.points[i])
+                        }
+                        let strokedPath = mutablePath.copy(strokingWithWidth: stroke.brushSize, lineCap: .round, lineJoin: .round, miterLimit: 10)
+                        cgCtx.addPath(strokedPath)
                     }
-                    let strokedPath = mutablePath.copy(strokingWithWidth: stroke.brushSize, lineCap: .round, lineJoin: .round, miterLimit: 10)
-                    cgCtx.addPath(strokedPath)
+                    cgCtx.clip()
+                    pixelated.draw(in: CGRect(origin: .zero, size: size))
+                    cgCtx.restoreGState()
                 }
-                cgCtx.clip()
-                pixelated.draw(in: CGRect(origin: .zero, size: size))
-                cgCtx.restoreGState()
             }
 
             for stroke in photo.strokes {
