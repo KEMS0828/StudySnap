@@ -823,22 +823,18 @@ struct PhotoCanvas: View {
 
     private func drawMosaicStrokes(_ strokes: [MosaicStroke], in context: inout GraphicsContext, size: CGSize) {
         guard !strokes.isEmpty else { return }
-        let grouped = Dictionary(grouping: strokes, by: { intensityKey($0.intensity) })
-        for (key, groupStrokes) in grouped {
+        for stroke in strokes {
+            guard stroke.points.count > 0 else { continue }
+            let key = intensityKey(stroke.intensity)
             guard let pixImage = pixelatedCache[key] else { continue }
+            var linePath = Path()
+            linePath.move(to: stroke.points[0])
+            for i in 1..<stroke.points.count {
+                linePath.addLine(to: stroke.points[i])
+            }
+            let strokedPath = linePath.strokedPath(StrokeStyle(lineWidth: stroke.brushSize, lineCap: .round, lineJoin: .round))
             context.drawLayer { layerCtx in
-                var combinedPath = Path()
-                for stroke in groupStrokes {
-                    guard stroke.points.count > 0 else { continue }
-                    var linePath = Path()
-                    linePath.move(to: stroke.points[0])
-                    for i in 1..<stroke.points.count {
-                        linePath.addLine(to: stroke.points[i])
-                    }
-                    let strokedPath = linePath.strokedPath(StrokeStyle(lineWidth: stroke.brushSize, lineCap: .round, lineJoin: .round))
-                    combinedPath.addPath(strokedPath)
-                }
-                layerCtx.clip(to: combinedPath)
+                layerCtx.clip(to: strokedPath)
                 layerCtx.draw(Image(uiImage: pixImage).resizable(), in: CGRect(origin: .zero, size: size))
             }
         }
@@ -906,20 +902,18 @@ struct PhotoCanvas: View {
             uiImage.draw(in: CGRect(origin: .zero, size: size))
 
             if !photo.mosaicStrokes.isEmpty {
-                let grouped = Dictionary(grouping: photo.mosaicStrokes, by: { Int($0.intensity.rounded()) })
-                for (key, groupStrokes) in grouped {
+                for stroke in photo.mosaicStrokes {
+                    guard !stroke.points.isEmpty else { continue }
+                    let key = Int(stroke.intensity.rounded())
                     guard let pixelated = pixelatedByKey[key] else { continue }
                     cgCtx.saveGState()
-                    for stroke in groupStrokes {
-                        guard !stroke.points.isEmpty else { continue }
-                        let mutablePath = CGMutablePath()
-                        mutablePath.move(to: stroke.points[0])
-                        for i in 1..<stroke.points.count {
-                            mutablePath.addLine(to: stroke.points[i])
-                        }
-                        let strokedPath = mutablePath.copy(strokingWithWidth: stroke.brushSize, lineCap: .round, lineJoin: .round, miterLimit: 10)
-                        cgCtx.addPath(strokedPath)
+                    let mutablePath = CGMutablePath()
+                    mutablePath.move(to: stroke.points[0])
+                    for i in 1..<stroke.points.count {
+                        mutablePath.addLine(to: stroke.points[i])
                     }
+                    let strokedPath = mutablePath.copy(strokingWithWidth: stroke.brushSize, lineCap: .round, lineJoin: .round, miterLimit: 10)
+                    cgCtx.addPath(strokedPath)
                     cgCtx.clip()
                     pixelated.draw(in: CGRect(origin: .zero, size: size))
                     cgCtx.restoreGState()
