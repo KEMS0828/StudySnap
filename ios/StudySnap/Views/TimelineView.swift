@@ -331,6 +331,7 @@ struct TimelineView: View {
                     .padding(.top, 4)
                     .padding(.bottom, 8)
                 }
+                .defaultScrollAnchor(.bottom)
                 .onScrollGeometryChange(for: CGFloat.self) { geo in
                     let maxOffset = geo.contentSize.height - geo.containerSize.height + geo.contentInsets.top + geo.contentInsets.bottom
                     guard maxOffset > 0 else { return -CGFloat.greatestFiniteMagnitude }
