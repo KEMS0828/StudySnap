@@ -823,8 +823,24 @@ struct PostCardView: View {
                 )
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(post.userName)
-                        .font(.headline)
+                    HStack(spacing: 6) {
+                        Text(post.userName)
+                            .font(.headline)
+                            .lineLimit(1)
+
+                        if let mode = post.mode {
+                            HStack(spacing: 3) {
+                                Image(systemName: mode.icon)
+                                    .font(.system(size: 9, weight: .semibold))
+                                Text(mode.title)
+                                    .font(.caption2.weight(.semibold))
+                            }
+                            .foregroundStyle(mode.tintColor)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2)
+                            .background(mode.tintColor.opacity(0.12), in: .capsule)
+                        }
+                    }
                     HStack(spacing: 4) {
                         Image(systemName: "clock")
                             .font(.caption2)
@@ -836,20 +852,6 @@ struct PostCardView: View {
                             .font(.caption)
                     }
                     .foregroundStyle(.secondary)
-
-                    if let mode = post.mode {
-                        HStack(spacing: 4) {
-                            Image(systemName: mode.icon)
-                                .font(.system(size: 9, weight: .semibold))
-                            Text(mode.title)
-                                .font(.caption2.weight(.semibold))
-                        }
-                        .foregroundStyle(mode.tintColor)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(mode.tintColor.opacity(0.12), in: .capsule)
-                        .padding(.top, 2)
-                    }
                 }
 
                 Spacer()
