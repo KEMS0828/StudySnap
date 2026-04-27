@@ -51,6 +51,7 @@ struct TimelineView: View {
     @State private var hasInitiallyScrolled = false
     @State private var needsScrollToBottom = false
     @State private var isRefreshing = false
+    @State private var scrolledItemID: String?
 
     private enum PendingNavigation {
         case cameraPreview
@@ -332,6 +333,7 @@ struct TimelineView: View {
                     .padding(.bottom, 8)
                 }
                 .defaultScrollAnchor(.bottom)
+                .scrollPosition(id: $scrolledItemID, anchor: .bottom)
                 .onScrollGeometryChange(for: CGFloat.self) { geo in
                     let maxOffset = geo.contentSize.height - geo.containerSize.height + geo.contentInsets.top + geo.contentInsets.bottom
                     guard maxOffset > 0 else { return -CGFloat.greatestFiniteMagnitude }
@@ -386,8 +388,9 @@ struct TimelineView: View {
     }
 
     private func scrollToBottom(proxy: ScrollViewProxy) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            withAnimation(.easeOut(duration: 0.1)) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            withAnimation(.easeOut(duration: 0.25)) {
+                scrolledItemID = "timeline_bottom"
                 proxy.scrollTo("timeline_bottom", anchor: .bottom)
             }
         }
