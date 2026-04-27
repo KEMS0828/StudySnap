@@ -27,6 +27,7 @@ struct PhotoEditContext: Identifiable {
 struct TimelineView: View {
     let dataStore: DataStore
     var store: StoreViewModel
+    var scrollToBottomTrigger: Int = 0
     private var blockService: BlockService { BlockService.shared }
     @State private var cameraService = CameraService()
     @State private var showModeSelection = false
@@ -360,6 +361,9 @@ struct TimelineView: View {
                 }
                 .onChange(of: dataStore.currentGroup?.id) { _, _ in
                     hasInitiallyScrolled = false
+                    needsScrollToBottom = true
+                }
+                .onChange(of: scrollToBottomTrigger) { _, _ in
                     needsScrollToBottom = true
                 }
                 .scrollDismissesKeyboard(.interactively)

@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var dataStore = DataStore()
     @State private var store = StoreViewModel()
     @State private var selectedTab = 0
+    @State private var timelineScrollToBottomTrigger = 0
     @State private var isConfigured = false
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding: Bool = false
     @Environment(\.scenePhase) private var scenePhase
@@ -21,9 +22,17 @@ struct ContentView: View {
                     ProfileSetupView(dataStore: dataStore)
                         .transition(.move(edge: .trailing))
                 } else {
-                    TabView(selection: $selectedTab) {
+                    TabView(selection: Binding(
+                        get: { selectedTab },
+                        set: { newValue in
+                            if newValue == 0 && selectedTab == 0 {
+                                timelineScrollToBottomTrigger += 1
+                            }
+                            selectedTab = newValue
+                        }
+                    )) {
                         Tab("タイムライン", systemImage: "rectangle.stack.fill", value: 0) {
-                            TimelineView(dataStore: dataStore, store: store)
+                            TimelineView(dataStore: dataStore, store: store, scrollToBottomTrigger: timelineScrollToBottomTrigger)
                         }
 
                         Tab("レポート", systemImage: "chart.bar.fill", value: 1) {
