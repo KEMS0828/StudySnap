@@ -711,7 +711,7 @@ struct TimelineView: View {
         session.reflection = reflection
         session.ownerUserId = dataStore.currentUser?.id
         dataStore.saveSession(session)
-        dataStore.createPost(from: session, editedPhotos: photos)
+        dataStore.createPost(from: session, editedPhotos: photos, mode: cameraService.selectedMode)
     }
 
     private func postDraftSession(subject: String, reflection: String, photos: [Data], draft: DraftData) {
@@ -721,7 +721,7 @@ struct TimelineView: View {
         session.reflection = reflection
         session.ownerUserId = dataStore.currentUser?.id
         dataStore.saveSession(session)
-        dataStore.createPost(from: session, editedPhotos: photos)
+        dataStore.createPost(from: session, editedPhotos: photos, mode: draft.mode)
     }
 }
 
@@ -833,6 +833,20 @@ struct PostCardView: View {
                             .font(.caption)
                     }
                     .foregroundStyle(.secondary)
+
+                    if let mode = post.mode {
+                        HStack(spacing: 4) {
+                            Image(systemName: mode.icon)
+                                .font(.system(size: 9, weight: .semibold))
+                            Text(mode.title)
+                                .font(.caption2.weight(.semibold))
+                        }
+                        .foregroundStyle(mode.tintColor)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(mode.tintColor.opacity(0.12), in: .capsule)
+                        .padding(.top, 2)
+                    }
                 }
 
                 Spacer()

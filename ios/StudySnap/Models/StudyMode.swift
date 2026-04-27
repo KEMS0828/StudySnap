@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 nonisolated enum StudyMode: String, CaseIterable, Identifiable, Codable, Sendable {
     case shortBreak = "shortBreak"
@@ -53,5 +54,14 @@ nonisolated enum StudyMode: String, CaseIterable, Identifiable, Codable, Sendabl
 
     func randomInterval() -> TimeInterval {
         TimeInterval.random(in: minInterval...maxInterval)
+    }
+
+    @MainActor
+    var tintColor: Color {
+        switch self {
+        case .shortBreak: return .teal
+        case .normal: return .blue
+        case .longSession: return .orange
+        }
     }
 }

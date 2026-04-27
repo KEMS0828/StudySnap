@@ -19,6 +19,12 @@ nonisolated struct StudyPost: Identifiable, Sendable {
     var photoApprovedByNames: [String]
     var photoApprovedAt: [Double]
     var userPhotoUrl: String?
+    var modeRawValue: String?
+
+    var mode: StudyMode? {
+        guard let raw = modeRawValue else { return nil }
+        return StudyMode(rawValue: raw)
+    }
 
     init(
         sessionId: String,
@@ -28,7 +34,8 @@ nonisolated struct StudyPost: Identifiable, Sendable {
         subject: String,
         reflection: String,
         photoUrls: [String],
-        duration: TimeInterval
+        duration: TimeInterval,
+        mode: StudyMode? = nil
     ) {
         self.id = UUID().uuidString
         self.sessionId = sessionId
@@ -48,6 +55,7 @@ nonisolated struct StudyPost: Identifiable, Sendable {
         self.photoApprovedByNames = Array(repeating: "", count: photoUrls.count)
         self.photoApprovedAt = Array(repeating: 0, count: photoUrls.count)
         self.userPhotoUrl = nil
+        self.modeRawValue = mode?.rawValue
     }
 
     var formattedDuration: String {
@@ -81,6 +89,7 @@ nonisolated struct StudyPost: Identifiable, Sendable {
         if let v = approvedByUserName { data["approvedByUserName"] = v }
         if let v = approvedAt { data["approvedAt"] = v.timeIntervalSince1970 }
         if let v = userPhotoUrl { data["userPhotoUrl"] = v }
+        if let v = modeRawValue { data["mode"] = v }
         return data
     }
 
@@ -125,6 +134,7 @@ nonisolated struct StudyPost: Identifiable, Sendable {
             post.photoApprovedAt = (0..<photoCount).map { $0 < rawAt.count ? rawAt[$0] : 0 }
         }
         post.userPhotoUrl = data["userPhotoUrl"] as? String
+        post.modeRawValue = data["mode"] as? String
         return post
     }
 }

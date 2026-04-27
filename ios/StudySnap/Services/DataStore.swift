@@ -453,7 +453,7 @@ class DataStore {
     var approvalError: String?
     var generalError: String?
 
-    func createPost(from session: StudySession, editedPhotos: [Data]) {
+    func createPost(from session: StudySession, editedPhotos: [Data], mode: StudyMode? = nil) {
         guard let user = currentUser, let group = currentGroup else { return }
 
         Task {
@@ -484,7 +484,8 @@ class DataStore {
                 subject: session.subject,
                 reflection: session.reflection,
                 photoUrls: photoUrls,
-                duration: session.duration
+                duration: session.duration,
+                mode: mode ?? session.studyMode
             )
             post.userPhotoUrl = user.profilePhotoUrl
             do {
