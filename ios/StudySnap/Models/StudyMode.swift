@@ -53,7 +53,23 @@ nonisolated enum StudyMode: String, CaseIterable, Identifiable, Codable, Sendabl
     }
 
     func randomInterval() -> TimeInterval {
-        TimeInterval.random(in: minInterval...maxInterval)
+        let lo = minInterval
+        let hi = maxInterval
+        let span = hi - lo
+        guard span > 0 else { return lo }
+        let q = span / 4.0
+        let r = Double.random(in: 0..<6)
+        let bucketStart: TimeInterval
+        if r < 1 {
+            bucketStart = lo
+        } else if r < 3 {
+            bucketStart = lo + q
+        } else if r < 5 {
+            bucketStart = lo + 2 * q
+        } else {
+            bucketStart = lo + 3 * q
+        }
+        return TimeInterval.random(in: bucketStart...(bucketStart + q))
     }
 
     @MainActor
