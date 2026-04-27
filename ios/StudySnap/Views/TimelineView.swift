@@ -331,7 +331,7 @@ struct TimelineView: View {
                     .padding(.top, 4)
                     .padding(.bottom, 8)
                 }
-                .defaultScrollAnchor(.bottom)
+                .defaultScrollAnchor(.top)
                 .onScrollGeometryChange(for: CGFloat.self) { geo in
                     let maxOffset = geo.contentSize.height - geo.containerSize.height + geo.contentInsets.top + geo.contentInsets.bottom
                     guard maxOffset > 0 else { return -CGFloat.greatestFiniteMagnitude }
@@ -346,10 +346,12 @@ struct TimelineView: View {
                         needsScrollToBottom = true
                     }
                 }
-                .onChange(of: mergedFeedItems.count) { _, newCount in
+                .onChange(of: mergedFeedItems.count) { oldCount, newCount in
                     if newCount > 0 && needsScrollToBottom {
                         needsScrollToBottom = false
                         hasInitiallyScrolled = true
+                        scrollToBottom(proxy: proxy)
+                    } else if newCount > oldCount && hasInitiallyScrolled {
                         scrollToBottom(proxy: proxy)
                     }
                 }
