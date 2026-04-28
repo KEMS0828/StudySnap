@@ -121,27 +121,27 @@ struct TimelineView: View {
         }
         .navigationTitle(dataStore.currentGroup != nil ? "" : "タイムライン")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color(.systemGroupedBackground), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
         .toolbar {
             if dataStore.currentGroup != nil {
                 ToolbarItem(placement: .principal) {
-                    HStack(spacing: 8) {
-                        Button {
-                            showGroupDetail = true
-                        } label: {
-                            HStack(spacing: 4) {
-                                Text(dataStore.currentGroup?.name ?? "タイムライン")
-                                    .font(.title3.bold())
-                                    .foregroundStyle(.primary)
-                                Image(systemName: "chevron.right")
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.secondary)
-                            }
+                    Button {
+                        showGroupDetail = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Text(dataStore.currentGroup?.name ?? "タイムライン")
+                                .font(.title3.bold())
+                                .foregroundStyle(.primary)
+                            Image(systemName: "chevron.right")
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
                         }
-                        .buttonStyle(.plain)
-
-                        startStudyToolbarButton
                     }
-                    .offset(y: -4)
+                    .buttonStyle(.plain)
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    startStudyToolbarButton
                 }
             }
         }
@@ -325,7 +325,7 @@ struct TimelineView: View {
                             selectedMember = member
                         }
                     )
-                    .padding(.top, -16)
+                    .padding(.top, -20)
                 }
 
                 if dataStore.hasDraft {
@@ -413,7 +413,7 @@ struct TimelineView: View {
                 .onTapGesture {
                     chatInputFocused = false
                 }
-                .background(Color(.systemGray4))
+                .background(Color(.systemGroupedBackground))
             }
 
             chatInputBar
@@ -618,9 +618,10 @@ struct TimelineView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 28, height: 28)
+                        .frame(width: 36, height: 36)
+                        .shadow(color: .blue.opacity(0.3), radius: 4, x: 0, y: 2)
                     Image(systemName: "play.fill")
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.white)
                         .offset(x: 1)
                 }
@@ -633,11 +634,11 @@ struct TimelineView: View {
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color(.systemGray4))
-                        .frame(width: 28, height: 28)
+                        .fill(Color(.systemGray3))
+                        .frame(width: 36, height: 36)
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(.secondary)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.white)
                 }
             }
             .buttonStyle(.plain)
