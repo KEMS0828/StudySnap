@@ -121,8 +121,7 @@ struct TimelineView: View {
         }
         .navigationTitle(dataStore.currentGroup != nil ? "" : "タイムライン")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color(.systemGroupedBackground), for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .toolbar {
             if dataStore.currentGroup != nil {
                 ToolbarItem(placement: .principal) {
@@ -618,10 +617,10 @@ struct TimelineView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 36, height: 36)
-                        .shadow(color: .blue.opacity(0.3), radius: 4, x: 0, y: 2)
+                        .frame(width: 44, height: 44)
+                        .shadow(color: .blue.opacity(0.3), radius: 5, x: 0, y: 2)
                     Image(systemName: "play.fill")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(.white)
                         .offset(x: 1)
                 }
@@ -635,9 +634,9 @@ struct TimelineView: View {
                 ZStack {
                     Circle()
                         .fill(Color(.systemGray3))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 44, height: 44)
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundStyle(.white)
                 }
             }
