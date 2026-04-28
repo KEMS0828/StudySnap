@@ -14,9 +14,10 @@ struct MembersStatusRowView: View {
                 ForEach(members, id: \.id) { member in
                     memberButton(member: member)
                 }
+                Spacer(minLength: 0)
             }
             .padding(.vertical, 2)
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 3) {
@@ -26,7 +27,6 @@ struct MembersStatusRowView: View {
                 }
                 .padding(.vertical, 2)
                 .padding(.trailing, 56)
-                .frame(maxWidth: .infinity)
             }
             .contentMargins(.horizontal, 0)
         }
