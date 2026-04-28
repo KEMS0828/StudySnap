@@ -119,7 +119,6 @@ struct TimelineView: View {
                 timelineContent
             }
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle(dataStore.currentGroup != nil ? "" : "タイムライン")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -142,6 +141,7 @@ struct TimelineView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     startStudyToolbarButton
+                        .offset(y: -4)
                 }
             }
         }
@@ -325,6 +325,8 @@ struct TimelineView: View {
                             selectedMember = member
                         }
                     )
+                    .offset(y: -6)
+                    .padding(.bottom, -6)
                 }
 
                 if dataStore.hasDraft {
@@ -332,8 +334,9 @@ struct TimelineView: View {
                 }
             }
             .padding(.horizontal)
-            .padding(.top, 4)
-            .padding(.bottom, 4)
+            .padding(.top, 0)
+            .padding(.bottom, 6)
+            .background(Color(.systemBackground))
 
             ScrollViewReader { proxy in
                 ScrollView {
@@ -410,6 +413,7 @@ struct TimelineView: View {
                 .onTapGesture {
                     chatInputFocused = false
                 }
+                .background(Color(.systemGray5))
             }
 
             chatInputBar
