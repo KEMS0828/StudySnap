@@ -124,20 +124,24 @@ struct TimelineView: View {
         .toolbar {
             if dataStore.currentGroup != nil {
                 ToolbarItem(placement: .principal) {
-                    Button {
-                        showGroupDetail = true
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(dataStore.currentGroup?.name ?? "タイムライン")
-                                .font(.title3.bold())
-                                .foregroundStyle(.primary)
-                            Image(systemName: "chevron.right")
-                                .font(.caption.bold())
-                                .foregroundStyle(.secondary)
+                    HStack(spacing: 8) {
+                        Button {
+                            showGroupDetail = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Text(dataStore.currentGroup?.name ?? "タイムライン")
+                                    .font(.title3.bold())
+                                    .foregroundStyle(.primary)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.secondary)
+                            }
                         }
-                        .offset(y: -4)
+                        .buttonStyle(.plain)
+
+                        startStudyToolbarButton
                     }
-                    .buttonStyle(.plain)
+                    .offset(y: -4)
                 }
             }
         }
@@ -321,7 +325,7 @@ struct TimelineView: View {
                             selectedMember = member
                         }
                     )
-                    .padding(.top, -10)
+                    .padding(.top, -16)
                 }
 
                 if dataStore.hasDraft {
@@ -330,7 +334,7 @@ struct TimelineView: View {
             }
             .padding(.horizontal)
             .padding(.top, 0)
-            .padding(.bottom, 2)
+            .padding(.bottom, 0)
             .background(Color(.systemGroupedBackground))
 
             ScrollViewReader { proxy in
@@ -410,11 +414,6 @@ struct TimelineView: View {
                     chatInputFocused = false
                 }
                 .background(Color(.systemGray4))
-                .overlay(alignment: .topTrailing) {
-                    startStudyFloatingButton
-                        .padding(.top, 10)
-                        .padding(.trailing, 14)
-                }
             }
 
             chatInputBar
@@ -619,10 +618,11 @@ struct TimelineView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 32, height: 32)
+                        .frame(width: 28, height: 28)
                     Image(systemName: "play.fill")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(.white)
+                        .offset(x: 1)
                 }
             }
             .buttonStyle(.plain)
@@ -634,9 +634,9 @@ struct TimelineView: View {
                 ZStack {
                     Circle()
                         .fill(Color(.systemGray4))
-                        .frame(width: 32, height: 32)
+                        .frame(width: 28, height: 28)
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(.secondary)
                 }
             }
