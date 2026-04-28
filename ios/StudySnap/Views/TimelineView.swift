@@ -139,10 +139,6 @@ struct TimelineView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                ToolbarItem(placement: .topBarTrailing) {
-                    startStudyToolbarButton
-                        .offset(y: -4)
-                }
             }
         }
         .sheet(isPresented: $showGroupDetail) {
@@ -317,16 +313,19 @@ struct TimelineView: View {
         VStack(spacing: 0) {
             VStack(spacing: 8) {
                 if !dataStore.groupMembers.isEmpty {
-                    MembersStatusRowView(
-                        members: dataStore.groupMembers,
-                        studyingMemberIds: dataStore.studyingMemberIds,
-                        dataStore: dataStore,
-                        onSelect: { member in
-                            selectedMember = member
-                        }
-                    )
-                    .offset(y: -6)
-                    .padding(.bottom, -6)
+                    HStack(alignment: .top, spacing: 8) {
+                        MembersStatusRowView(
+                            members: dataStore.groupMembers,
+                            studyingMemberIds: dataStore.studyingMemberIds,
+                            dataStore: dataStore,
+                            onSelect: { member in
+                                selectedMember = member
+                            }
+                        )
+                        startStudyToolbarButton
+                            .padding(.top, 2)
+                    }
+                    .padding(.top, -4)
                 }
 
                 if dataStore.hasDraft {
@@ -336,7 +335,7 @@ struct TimelineView: View {
             .padding(.horizontal)
             .padding(.top, 0)
             .padding(.bottom, 6)
-            .background(Color(.systemBackground))
+            .background(Color(.systemGroupedBackground))
 
             ScrollViewReader { proxy in
                 ScrollView {
@@ -413,7 +412,7 @@ struct TimelineView: View {
                 .onTapGesture {
                     chatInputFocused = false
                 }
-                .background(Color(.systemGray5))
+                .background(Color(.systemGray4))
             }
 
             chatInputBar

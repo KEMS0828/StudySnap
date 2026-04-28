@@ -6,7 +6,7 @@ struct MembersStatusRowView: View {
     let dataStore: DataStore
     var onSelect: (UserProfile) -> Void
 
-    private let avatarSize: CGFloat = 40
+    private let avatarSize: CGFloat = 36
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
