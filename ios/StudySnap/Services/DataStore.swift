@@ -12,9 +12,16 @@ class DataStore {
     var goals: [StudyGoal] = []
     var chatMessages: [ChatMessage] = []
     var isLoading: Bool = false
+    var groupMembers: [UserProfile] = []
+    var studyingMemberIds: Set<String> = []
 
     private let cloud = CloudService()
+    private let presenceService = StudyingPresenceService()
+    private var presenceHeartbeatTask: Task<Void, Never>?
+    private var presenceStaleTask: Task<Void, Never>?
+    private var latestPresences: [StudyingPresence] = []
     private var currentAuthUserId: String?
+    private static let presenceStaleThreshold: TimeInterval = 60
 
     private static let draftKey = "StudySnap_Draft"
 
@@ -97,8 +104,95 @@ class DataStore {
         timelinePosts = []
         sessions = []
         goals = []
+        groupMembers = []
+        studyingMemberIds = []
         currentAuthUserId = nil
+        stopStudyingPresence()
+        Task { [presenceService] in await presenceService.stopListening() }
         BlockService.shared.reset()
+    }
+
+    func loadGroupMembers() async {
+        guard let group = currentGroup else {
+            groupMembers = []
+            return
+        }
+        let fetched = await fetchMembers(for: group)
+        groupMembers = fetched
+    }
+
+    func startPresenceListening() {
+        guard let group = currentGroup else { return }
+        let groupId = group.id
+        Task { [presenceService, weak self] in
+            await presenceService.startListening(groupId: groupId) { presences in
+                Task { @MainActor [weak self] in
+                    self?.applyPresences(presences)
+                }
+            }
+        }
+        startPresenceStaleSweeper()
+    }
+
+    func stopPresenceListening() {
+        Task { [presenceService] in await presenceService.stopListening() }
+        presenceStaleTask?.cancel()
+        presenceStaleTask = nil
+        latestPresences = []
+        studyingMemberIds = []
+    }
+
+    private func applyPresences(_ presences: [StudyingPresence]) {
+        latestPresences = presences
+        recomputeStudyingMembers()
+    }
+
+    private func recomputeStudyingMembers() {
+        let now = Date.now
+        let active = latestPresences
+            .filter { now.timeIntervalSince($0.updatedAt) < DataStore.presenceStaleThreshold }
+            .map { $0.userId }
+        let newSet = Set(active)
+        if newSet != studyingMemberIds {
+            studyingMemberIds = newSet
+        }
+    }
+
+    private func startPresenceStaleSweeper() {
+        presenceStaleTask?.cancel()
+        presenceStaleTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(15))
+                await MainActor.run { [weak self] in
+                    self?.recomputeStudyingMembers()
+                }
+            }
+        }
+    }
+
+    func startStudyingPresence() {
+        guard let user = currentUser, let group = currentGroup else { return }
+        let userId = user.id
+        let groupId = group.id
+        presenceHeartbeatTask?.cancel()
+        presenceHeartbeatTask = Task { [presenceService] in
+            await presenceService.upsertPresence(userId: userId, groupId: groupId)
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(20))
+                if Task.isCancelled { break }
+                await presenceService.upsertPresence(userId: userId, groupId: groupId)
+            }
+        }
+    }
+
+    func stopStudyingPresence() {
+        presenceHeartbeatTask?.cancel()
+        presenceHeartbeatTask = nil
+        guard let user = currentUser else { return }
+        let userId = user.id
+        Task { [presenceService] in
+            await presenceService.removePresence(userId: userId)
+        }
     }
 
     private func loadUser(authUserId: String, displayName: String?) async {

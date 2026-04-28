@@ -5,6 +5,7 @@ struct StudyingView: View {
     let cameraService: CameraService
     let store: StoreViewModel
     let todayShootingTime: TimeInterval
+    var dataStore: DataStore?
     var onFinish: (TimeInterval) -> Void
 
     private var isPremium: Bool { store.isPremium }
@@ -58,6 +59,7 @@ struct StudyingView: View {
             startTimer()
             cameraService.startCapturing(mode: mode)
             UIApplication.shared.isIdleTimerDisabled = true
+            dataStore?.startStudyingPresence()
         }
         .onDisappear {
             stopTimer()
@@ -66,6 +68,7 @@ struct StudyingView: View {
                 cameraService.stopLivePreview()
                 showMiniPreview = false
             }
+            dataStore?.stopStudyingPresence()
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .background || newPhase == .inactive {

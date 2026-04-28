@@ -51,6 +51,7 @@ struct TimelineView: View {
     @State private var hasInitiallyScrolled = false
     @State private var needsScrollToBottom = false
     @State private var isRefreshing = false
+    @State private var selectedMember: UserProfile?
 
     private enum PendingNavigation {
         case cameraPreview
@@ -135,6 +136,7 @@ struct TimelineView: View {
                                 .font(.caption.bold())
                                 .foregroundStyle(.secondary)
                         }
+                        .offset(y: -4)
                     }
                     .buttonStyle(.plain)
                 }
@@ -142,6 +144,28 @@ struct TimelineView: View {
         }
         .sheet(isPresented: $showGroupDetail) {
             groupDetailSheet
+        }
+        .sheet(item: $selectedMember) { member in
+            NavigationStack {
+                MemberProfileView(
+                    member: member,
+                    isAdmin: member.id == dataStore.currentGroup?.adminId,
+                    dataStore: dataStore
+                )
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("閉じる") { selectedMember = nil }
+                    }
+                }
+            }
+        }
+        .task(id: dataStore.currentGroup?.id) {
+            if dataStore.currentGroup != nil {
+                await dataStore.loadGroupMembers()
+                dataStore.startPresenceListening()
+            } else {
+                dataStore.stopPresenceListening()
+            }
         }
         .onChange(of: dataStore.uploadError) { _, newValue in
             showUploadError = newValue != nil
@@ -207,7 +231,8 @@ struct TimelineView: View {
             StudyingView(
                 cameraService: cameraService,
                 store: store,
-                todayShootingTime: dataStore.todayTotalUsedTime
+                todayShootingTime: dataStore.todayTotalUsedTime,
+                dataStore: dataStore
             ) { duration in
                 pendingDurationForContext = duration
                 pendingNavigation = .photoEdit
@@ -289,6 +314,17 @@ struct TimelineView: View {
         VStack(spacing: 0) {
             VStack(spacing: 8) {
                 startStudyCard
+
+                if !dataStore.groupMembers.isEmpty {
+                    MembersStatusRowView(
+                        members: dataStore.groupMembers,
+                        studyingMemberIds: dataStore.studyingMemberIds,
+                        dataStore: dataStore,
+                        onSelect: { member in
+                            selectedMember = member
+                        }
+                    )
+                }
 
                 if dataStore.hasDraft {
                     draftCard
