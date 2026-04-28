@@ -9,21 +9,37 @@ struct MembersStatusRowView: View {
     private let avatarSize: CGFloat = 34
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        ViewThatFits(in: .horizontal) {
             HStack(alignment: .top, spacing: 3) {
                 ForEach(members, id: \.id) { member in
-                    Button {
-                        onSelect(member)
-                    } label: {
-                        memberCell(member: member)
-                    }
-                    .buttonStyle(.plain)
+                    memberButton(member: member)
                 }
             }
             .padding(.vertical, 2)
-            .padding(.trailing, 56)
+            .frame(maxWidth: .infinity)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(alignment: .top, spacing: 3) {
+                    ForEach(members, id: \.id) { member in
+                        memberButton(member: member)
+                    }
+                }
+                .padding(.vertical, 2)
+                .padding(.trailing, 56)
+                .frame(maxWidth: .infinity)
+            }
+            .contentMargins(.horizontal, 0)
         }
-        .contentMargins(.horizontal, 0)
+    }
+
+    @ViewBuilder
+    private func memberButton(member: UserProfile) -> some View {
+        Button {
+            onSelect(member)
+        } label: {
+            memberCell(member: member)
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -39,14 +55,6 @@ struct MembersStatusRowView: View {
                 }
             }
             .frame(width: avatarSize + 4, height: avatarSize + 4)
-
-            if isStudying {
-                Text("勉強中")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(.red)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-            }
         }
     }
 }

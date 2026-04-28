@@ -415,10 +415,7 @@ struct TimelineView: View {
         .padding(.top, 2)
         .padding(.bottom, 2)
         .frame(maxWidth: .infinity)
-        .background(
-            Color(.systemGroupedBackground)
-                .overlay(Color.black.opacity(0.12))
-        )
+        .background(Color(.systemGroupedBackground))
         .overlay(alignment: .trailing) {
             startStudyHeaderButton
                 .padding(.trailing, 14)
