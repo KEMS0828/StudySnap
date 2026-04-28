@@ -121,29 +121,7 @@ struct TimelineView: View {
         }
         .navigationTitle(dataStore.currentGroup != nil ? "" : "タイムライン")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .toolbar {
-            if dataStore.currentGroup != nil {
-                ToolbarItem(placement: .principal) {
-                    Button {
-                        showGroupDetail = true
-                    } label: {
-                        HStack(spacing: 4) {
-                            Text(dataStore.currentGroup?.name ?? "タイムライン")
-                                .font(.title3.bold())
-                                .foregroundStyle(.primary)
-                            Image(systemName: "chevron.right")
-                                .font(.caption.bold())
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    startStudyToolbarButton
-                }
-            }
-        }
+        .toolbar(dataStore.currentGroup != nil ? .hidden : .visible, for: .navigationBar)
         .sheet(isPresented: $showGroupDetail) {
             groupDetailSheet
         }
@@ -314,27 +292,14 @@ struct TimelineView: View {
 
     private var timelineContent: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 8) {
-                if !dataStore.groupMembers.isEmpty {
-                    MembersStatusRowView(
-                        members: dataStore.groupMembers,
-                        studyingMemberIds: dataStore.studyingMemberIds,
-                        dataStore: dataStore,
-                        onSelect: { member in
-                            selectedMember = member
-                        }
-                    )
-                    .padding(.top, -20)
-                }
+            unifiedHeader
 
-                if dataStore.hasDraft {
-                    draftCard
-                }
+            if dataStore.hasDraft {
+                draftCard
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+                    .background(Color(.systemGroupedBackground))
             }
-            .padding(.horizontal)
-            .padding(.top, 0)
-            .padding(.bottom, 0)
-            .background(Color(.systemGroupedBackground))
 
             ScrollViewReader { proxy in
                 ScrollView {
@@ -369,7 +334,6 @@ struct TimelineView: View {
                     .padding(.top, 4)
                     .padding(.bottom, 8)
                 }
-                .safeAreaPadding(.top, 70)
                 .defaultScrollAnchor(.top)
                 .onScrollGeometryChange(for: CGFloat.self) { geo in
                     let maxOffset = geo.contentSize.height - geo.containerSize.height + geo.contentInsets.top + geo.contentInsets.bottom
@@ -412,10 +376,93 @@ struct TimelineView: View {
                 .onTapGesture {
                     chatInputFocused = false
                 }
-                .background(Color(.systemGroupedBackground))
+                .background(Color(.secondarySystemGroupedBackground))
             }
 
             chatInputBar
+        }
+    }
+
+    private var unifiedHeader: some View {
+        VStack(spacing: 6) {
+            Button {
+                showGroupDetail = true
+            } label: {
+                HStack(spacing: 4) {
+                    Text(dataStore.currentGroup?.name ?? "タイムライン")
+                        .font(.title3.bold())
+                        .foregroundStyle(.primary)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+
+            if !dataStore.groupMembers.isEmpty {
+                MembersStatusRowView(
+                    members: dataStore.groupMembers,
+                    studyingMemberIds: dataStore.studyingMemberIds,
+                    dataStore: dataStore,
+                    onSelect: { member in
+                        selectedMember = member
+                    }
+                )
+            }
+        }
+        .padding(.horizontal)
+        .padding(.top, 6)
+        .padding(.bottom, 8)
+        .frame(maxWidth: .infinity)
+        .background(Color(.systemGroupedBackground))
+        .overlay(alignment: .trailing) {
+            startStudyHeaderButton
+                .padding(.trailing, 14)
+        }
+    }
+
+    @ViewBuilder
+    private var startStudyHeaderButton: some View {
+        if canStartStudy {
+            Button {
+                startStudyFlow()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.blue, .cyan],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 52, height: 52)
+                        .shadow(color: .blue.opacity(0.35), radius: 6, x: 0, y: 3)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(.white)
+                        .offset(x: 2)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("勉強を始める")
+        } else {
+            Button {
+                showPaywall = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color(.systemGray3))
+                        .frame(width: 52, height: 52)
+                        .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("今日の無料枠を使い切りました")
         }
     }
 
