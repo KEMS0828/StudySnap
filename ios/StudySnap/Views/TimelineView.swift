@@ -414,13 +414,16 @@ struct TimelineView: View {
                         selectedMember = member
                     }
                 )
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .frame(maxWidth: .infinity)
+                .background(Color(.secondarySystemGroupedBackground))
             }
         }
         .padding(.horizontal)
         .padding(.top, 2)
         .padding(.bottom, 2)
         .frame(maxWidth: .infinity)
-        .background(Color(.secondarySystemGroupedBackground))
     }
 
     @ViewBuilder
