@@ -415,10 +415,13 @@ struct TimelineView: View {
                         selectedMember = member
                     }
                 )
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .frame(maxWidth: .infinity)
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(
+                    Capsule()
+                        .fill(Color(.secondarySystemGroupedBackground))
+                )
+                .padding(.horizontal, 8)
             }
         }
         .padding(.top, 2)
