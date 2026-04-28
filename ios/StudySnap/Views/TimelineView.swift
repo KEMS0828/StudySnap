@@ -377,6 +377,11 @@ struct TimelineView: View {
                     chatInputFocused = false
                 }
                 .background(Color(.systemGroupedBackground))
+                .overlay(alignment: .bottomTrailing) {
+                    startStudyFloatingButton
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 16)
+                }
             }
 
             chatInputBar
@@ -415,11 +420,7 @@ struct TimelineView: View {
         .padding(.top, 2)
         .padding(.bottom, 2)
         .frame(maxWidth: .infinity)
-        .background(Color(.systemGroupedBackground))
-        .overlay(alignment: .trailing) {
-            startStudyHeaderButton
-                .padding(.trailing, 14)
-        }
+        .background(Color(.secondarySystemGroupedBackground))
     }
 
     @ViewBuilder
