@@ -298,7 +298,7 @@ struct TimelineView: View {
                 draftCard
                     .padding(.horizontal)
                     .padding(.bottom, 8)
-                    .background(Color(.systemGroupedBackground).mix(with: Color(.systemBackground), by: 0.35))
+                    .background(Color(.systemGroupedBackground))
             }
 
             ScrollViewReader { proxy in
@@ -376,7 +376,7 @@ struct TimelineView: View {
                 .onTapGesture {
                     chatInputFocused = false
                 }
-                .background(Color(.systemGroupedBackground).mix(with: Color(.systemBackground), by: 0.35))
+                .background(Color(.systemGroupedBackground))
             }
 
             chatInputBar
@@ -415,7 +415,7 @@ struct TimelineView: View {
         .padding(.top, 6)
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity)
-        .background(Color(.systemGroupedBackground).mix(with: Color(.systemBackground), by: 0.35))
+        .background(Color(.secondarySystemGroupedBackground))
         .overlay(alignment: .trailing) {
             startStudyHeaderButton
                 .padding(.trailing, 14)
@@ -622,7 +622,7 @@ struct TimelineView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(.bar)
+        .background(Color(.secondarySystemGroupedBackground))
     }
 
     private static let chatCharLimit: Int = 100
