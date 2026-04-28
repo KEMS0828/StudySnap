@@ -384,7 +384,7 @@ struct TimelineView: View {
     }
 
     private var unifiedHeader: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 2) {
             Button {
                 showGroupDetail = true
             } label: {
@@ -412,10 +412,13 @@ struct TimelineView: View {
             }
         }
         .padding(.horizontal)
-        .padding(.top, 6)
-        .padding(.bottom, 8)
+        .padding(.top, 2)
+        .padding(.bottom, 2)
         .frame(maxWidth: .infinity)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(
+            Color(.systemGroupedBackground)
+                .overlay(Color.black.opacity(0.12))
+        )
         .overlay(alignment: .trailing) {
             startStudyHeaderButton
                 .padding(.trailing, 14)
