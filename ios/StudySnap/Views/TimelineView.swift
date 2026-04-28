@@ -140,6 +140,9 @@ struct TimelineView: View {
                     }
                     .buttonStyle(.plain)
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    startStudyToolbarButton
+                }
             }
         }
         .sheet(isPresented: $showGroupDetail) {
@@ -313,8 +316,6 @@ struct TimelineView: View {
     private var timelineContent: some View {
         VStack(spacing: 0) {
             VStack(spacing: 8) {
-                startStudyCard
-
                 if !dataStore.groupMembers.isEmpty {
                     MembersStatusRowView(
                         members: dataStore.groupMembers,
@@ -552,6 +553,47 @@ struct TimelineView: View {
 
     private var canStartStudy: Bool {
         store.canStartStudy(dailyStudyTime: dataStore.todayTotalUsedTime)
+    }
+
+    @ViewBuilder
+    private var startStudyToolbarButton: some View {
+        if canStartStudy {
+            Button {
+                startStudyFlow()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.blue, .cyan],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("勉強を始める")
+        } else {
+            Button {
+                showPaywall = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color(.systemGray4))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("今日の無料枠を使い切りました")
+        }
     }
 
     private var startStudyCard: some View {
