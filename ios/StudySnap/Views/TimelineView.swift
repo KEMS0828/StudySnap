@@ -377,11 +377,6 @@ struct TimelineView: View {
                     chatInputFocused = false
                 }
                 .background(Color(.systemGroupedBackground))
-                .overlay(alignment: .bottomTrailing) {
-                    startStudyFloatingButton
-                        .padding(.trailing, 16)
-                        .padding(.bottom, 16)
-                }
             }
 
             chatInputBar
@@ -389,7 +384,7 @@ struct TimelineView: View {
     }
 
     private var unifiedHeader: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 2) {
             Button {
                 showGroupDetail = true
             } label: {
@@ -404,7 +399,6 @@ struct TimelineView: View {
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity)
-            .padding(.horizontal)
 
             if !dataStore.groupMembers.isEmpty {
                 MembersStatusRowView(
@@ -415,19 +409,17 @@ struct TimelineView: View {
                         selectedMember = member
                     }
                 )
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(Color(.secondarySystemGroupedBackground))
-                )
-                .padding(.horizontal, 8)
             }
         }
+        .padding(.horizontal)
         .padding(.top, 2)
         .padding(.bottom, 2)
         .frame(maxWidth: .infinity)
         .background(Color(.systemGroupedBackground))
+        .overlay(alignment: .trailing) {
+            startStudyHeaderButton
+                .padding(.trailing, 14)
+        }
     }
 
     @ViewBuilder

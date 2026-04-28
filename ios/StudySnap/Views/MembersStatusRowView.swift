@@ -16,6 +16,7 @@ struct MembersStatusRowView: View {
                 }
             }
             .padding(.vertical, 2)
+            .frame(maxWidth: .infinity)
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(alignment: .top, spacing: 3) {
