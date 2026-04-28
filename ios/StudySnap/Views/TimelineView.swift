@@ -313,19 +313,15 @@ struct TimelineView: View {
         VStack(spacing: 0) {
             VStack(spacing: 8) {
                 if !dataStore.groupMembers.isEmpty {
-                    HStack(alignment: .top, spacing: 8) {
-                        MembersStatusRowView(
-                            members: dataStore.groupMembers,
-                            studyingMemberIds: dataStore.studyingMemberIds,
-                            dataStore: dataStore,
-                            onSelect: { member in
-                                selectedMember = member
-                            }
-                        )
-                        startStudyToolbarButton
-                            .padding(.top, 2)
-                    }
-                    .padding(.top, -4)
+                    MembersStatusRowView(
+                        members: dataStore.groupMembers,
+                        studyingMemberIds: dataStore.studyingMemberIds,
+                        dataStore: dataStore,
+                        onSelect: { member in
+                            selectedMember = member
+                        }
+                    )
+                    .padding(.top, -10)
                 }
 
                 if dataStore.hasDraft {
@@ -334,7 +330,7 @@ struct TimelineView: View {
             }
             .padding(.horizontal)
             .padding(.top, 0)
-            .padding(.bottom, 6)
+            .padding(.bottom, 2)
             .background(Color(.systemGroupedBackground))
 
             ScrollViewReader { proxy in
@@ -370,6 +366,7 @@ struct TimelineView: View {
                     .padding(.top, 4)
                     .padding(.bottom, 8)
                 }
+                .safeAreaPadding(.top, 70)
                 .defaultScrollAnchor(.top)
                 .onScrollGeometryChange(for: CGFloat.self) { geo in
                     let maxOffset = geo.contentSize.height - geo.containerSize.height + geo.contentInsets.top + geo.contentInsets.bottom
@@ -413,9 +410,58 @@ struct TimelineView: View {
                     chatInputFocused = false
                 }
                 .background(Color(.systemGray4))
+                .overlay(alignment: .topTrailing) {
+                    startStudyFloatingButton
+                        .padding(.top, 10)
+                        .padding(.trailing, 14)
+                }
             }
 
             chatInputBar
+        }
+    }
+
+    @ViewBuilder
+    private var startStudyFloatingButton: some View {
+        if canStartStudy {
+            Button {
+                startStudyFlow()
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.blue, .cyan],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 56, height: 56)
+                        .shadow(color: .blue.opacity(0.35), radius: 8, x: 0, y: 4)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(.white)
+                        .offset(x: 2)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("勉強を始める")
+        } else {
+            Button {
+                showPaywall = true
+            } label: {
+                ZStack {
+                    Circle()
+                        .fill(Color(.systemGray3))
+                        .frame(width: 56, height: 56)
+                        .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("今日の無料枠を使い切りました")
         }
     }
 
