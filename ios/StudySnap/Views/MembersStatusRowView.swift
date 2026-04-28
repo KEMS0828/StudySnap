@@ -6,11 +6,11 @@ struct MembersStatusRowView: View {
     let dataStore: DataStore
     var onSelect: (UserProfile) -> Void
 
-    private let avatarSize: CGFloat = 36
+    private let avatarSize: CGFloat = 34
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 4) {
+            HStack(alignment: .top, spacing: 3) {
                 ForEach(members, id: \.id) { member in
                     Button {
                         onSelect(member)

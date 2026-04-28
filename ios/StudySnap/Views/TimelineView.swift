@@ -298,7 +298,7 @@ struct TimelineView: View {
                 draftCard
                     .padding(.horizontal)
                     .padding(.bottom, 8)
-                    .background(Color(.systemGroupedBackground))
+                    .background(Color(.systemGroupedBackground).mix(with: Color(.systemBackground), by: 0.35))
             }
 
             ScrollViewReader { proxy in
@@ -376,7 +376,7 @@ struct TimelineView: View {
                 .onTapGesture {
                     chatInputFocused = false
                 }
-                .background(Color(.systemGroupedBackground))
+                .background(Color(.systemGroupedBackground).mix(with: Color(.systemBackground), by: 0.35))
             }
 
             chatInputBar
@@ -415,7 +415,7 @@ struct TimelineView: View {
         .padding(.top, 6)
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity)
-        .background(Color(.systemGroupedBackground))
+        .background(Color(.systemGroupedBackground).mix(with: Color(.systemBackground), by: 0.35))
         .overlay(alignment: .trailing) {
             startStudyHeaderButton
                 .padding(.trailing, 14)
