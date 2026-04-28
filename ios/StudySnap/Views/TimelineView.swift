@@ -389,7 +389,7 @@ struct TimelineView: View {
     }
 
     private var unifiedHeader: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 6) {
             Button {
                 showGroupDetail = true
             } label: {
@@ -404,6 +404,7 @@ struct TimelineView: View {
             }
             .buttonStyle(.plain)
             .frame(maxWidth: .infinity)
+            .padding(.horizontal)
 
             if !dataStore.groupMembers.isEmpty {
                 MembersStatusRowView(
@@ -415,15 +416,15 @@ struct TimelineView: View {
                     }
                 )
                 .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.vertical, 6)
                 .frame(maxWidth: .infinity)
                 .background(Color(.secondarySystemGroupedBackground))
             }
         }
-        .padding(.horizontal)
         .padding(.top, 2)
         .padding(.bottom, 2)
         .frame(maxWidth: .infinity)
+        .background(Color(.systemGroupedBackground))
     }
 
     @ViewBuilder
