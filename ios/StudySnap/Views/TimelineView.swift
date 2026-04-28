@@ -376,7 +376,7 @@ struct TimelineView: View {
                 .onTapGesture {
                     chatInputFocused = false
                 }
-                .background(Color(.secondarySystemGroupedBackground))
+                .background(Color(.systemGroupedBackground))
             }
 
             chatInputBar

@@ -10,7 +10,7 @@ struct MembersStatusRowView: View {
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 12) {
+            HStack(alignment: .top, spacing: 4) {
                 ForEach(members, id: \.id) { member in
                     Button {
                         onSelect(member)
@@ -21,6 +21,7 @@ struct MembersStatusRowView: View {
                 }
             }
             .padding(.vertical, 2)
+            .padding(.trailing, 56)
         }
         .contentMargins(.horizontal, 0)
     }
