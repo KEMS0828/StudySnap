@@ -407,7 +407,7 @@ struct TimelineView: View {
     }
 
     private var unifiedHeader: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: 0) {
             HStack(alignment: .center, spacing: 12) {
                 Button {
                     showGroupDetail = true
