@@ -6,7 +6,7 @@ struct MembersStatusRowView: View {
     let dataStore: DataStore
     var onSelect: (UserProfile) -> Void
 
-    private let avatarSize: CGFloat = 38
+    private let avatarSize: CGFloat = 34
 
     private var sortedMembers: [UserProfile] {
         members.sorted { a, b in
@@ -24,7 +24,7 @@ struct MembersStatusRowView: View {
                     memberButton(member: member, index: index)
                 }
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, 2)
             .padding(.trailing, 64)
         }
         .contentMargins(.horizontal, 0)

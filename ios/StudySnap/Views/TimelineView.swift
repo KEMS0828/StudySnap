@@ -298,7 +298,7 @@ struct TimelineView: View {
                 draftCard
                     .padding(.horizontal)
                     .padding(.bottom, 8)
-                    .background(Color(.systemGroupedBackground))
+                    .background(Color(.secondarySystemBackground))
             }
 
             ScrollViewReader { proxy in
@@ -376,7 +376,7 @@ struct TimelineView: View {
                 .onTapGesture {
                     chatInputFocused = false
                 }
-                .background(Color(.systemGroupedBackground))
+                .background(Color(.secondarySystemBackground))
             }
 
             chatInputBar
@@ -391,8 +391,23 @@ struct TimelineView: View {
         dataStore.groupMembers.count
     }
 
+    private var headerBackgroundGradient: some View {
+        ZStack {
+            Color(.systemGroupedBackground)
+            LinearGradient(
+                colors: [
+                    Color.blue.opacity(0.14),
+                    Color.cyan.opacity(0.07),
+                    Color.blue.opacity(0.04)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+    }
+
     private var unifiedHeader: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 6) {
             HStack(alignment: .center, spacing: 12) {
                 Button {
                     showGroupDetail = true
@@ -407,10 +422,10 @@ struct TimelineView: View {
                                         endPoint: .bottomTrailing
                                     )
                                 )
-                                .frame(width: 34, height: 34)
+                                .frame(width: 30, height: 30)
                                 .shadow(color: .blue.opacity(0.25), radius: 4, x: 0, y: 2)
                             Image(systemName: "person.3.fill")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.system(size: 13, weight: .bold))
                                 .foregroundStyle(.white)
                         }
 
@@ -470,28 +485,19 @@ struct TimelineView: View {
                 .padding(.horizontal, 12)
             }
         }
-        .padding(.top, 6)
-        .padding(.bottom, 8)
+        .padding(.top, 4)
+        .padding(.bottom, 6)
         .frame(maxWidth: .infinity)
-        .background(
-            ZStack {
-                Color(.systemGroupedBackground)
-                LinearGradient(
-                    colors: [
-                        Color.blue.opacity(0.10),
-                        Color.cyan.opacity(0.05),
-                        Color.clear
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            }
-        )
+        .background {
+            headerBackgroundGradient
+                .ignoresSafeArea(edges: .top)
+        }
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(Color.primary.opacity(0.06))
+                .fill(Color.primary.opacity(0.18))
                 .frame(height: 0.5)
         }
+        .shadow(color: Color.black.opacity(0.05), radius: 3, x: 0, y: 2)
     }
 
     @State private var startButtonPulse: Bool = false
@@ -697,7 +703,11 @@ struct TimelineView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 9)
-                .background(Color(.secondarySystemBackground), in: .capsule)
+                .background(Color(.systemBackground), in: .capsule)
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.blue.opacity(0.18), lineWidth: 0.5)
+                )
 
                 if chatInputFocused || !chatInputText.isEmpty {
                     Text("\(chatInputText.count) / \(Self.chatCharLimit)")
@@ -710,18 +720,38 @@ struct TimelineView: View {
             Button {
                 trySendChat()
             } label: {
-                Image(systemName: "arrow.up")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.white)
-                    .frame(width: 36, height: 36)
-                    .background(canSendChat ? Color.blue : Color.gray.opacity(0.4), in: .circle)
+                ZStack {
+                    Circle()
+                        .fill(
+                            canSendChat
+                            ? AnyShapeStyle(LinearGradient(
+                                colors: [.blue, .cyan],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ))
+                            : AnyShapeStyle(Color.gray.opacity(0.4))
+                        )
+                        .frame(width: 36, height: 36)
+                        .shadow(color: canSendChat ? Color.blue.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
+                    Image(systemName: "arrow.up")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
+                }
             }
             .disabled(!canSendChat)
             .sensoryFeedback(.impact(weight: .light), trigger: dataStore.chatMessages.count)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(Color(.secondarySystemGroupedBackground))
+        .background {
+            headerBackgroundGradient
+                .ignoresSafeArea(edges: .bottom)
+        }
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.primary.opacity(0.18))
+                .frame(height: 0.5)
+        }
     }
 
     private static let chatCharLimit: Int = 100
