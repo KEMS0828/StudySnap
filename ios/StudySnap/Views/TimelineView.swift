@@ -486,7 +486,7 @@ struct TimelineView: View {
                 .padding(.top, -2)
             }
         }
-        .padding(.top, -8)
+        .padding(.top, -18)
         .padding(.bottom, 0)
         .frame(maxWidth: .infinity)
         .background {
