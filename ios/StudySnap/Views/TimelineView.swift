@@ -407,7 +407,7 @@ struct TimelineView: View {
     }
 
     private var unifiedHeader: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 2) {
             HStack(alignment: .center, spacing: 12) {
                 Button {
                     showGroupDetail = true
@@ -483,10 +483,11 @@ struct TimelineView: View {
                     }
                 )
                 .padding(.horizontal, 12)
+                .padding(.top, -2)
             }
         }
         .padding(.top, 4)
-        .padding(.bottom, 6)
+        .padding(.bottom, 4)
         .frame(maxWidth: .infinity)
         .background {
             headerBackgroundGradient
