@@ -4,8 +4,10 @@ import RevenueCat
 struct StudySnapPaywallView: View {
     var store: StoreViewModel
     var dailyUsedTime: TimeInterval = 0
+    var userId: String? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var selectedPackage: Package?
+    @State private var showPromoSheet = false
 
     var body: some View {
         NavigationStack {
@@ -15,7 +17,12 @@ struct StudySnapPaywallView: View {
                 packagesSection
                 Spacer(minLength: 0)
                 purchaseButton
+                promoCodeLink
                 footerSection
+            }
+            .sheet(isPresented: $showPromoSheet) {
+                PromoCodeRedemptionView(store: store, userId: userId)
+                    .presentationDetents([.medium, .large])
             }
             .background(Color(.systemGroupedBackground))
             .navigationBarTitleDisplayMode(.inline)
@@ -219,6 +226,23 @@ struct StudySnapPaywallView: View {
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
+    }
+
+    private var promoCodeLink: some View {
+        Button {
+            showPromoSheet = true
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "gift.fill")
+                    .font(.caption)
+                Text("キャンペーンコードをお持ちの方")
+                    .font(.footnote.weight(.semibold))
+                    .underline()
+            }
+            .foregroundStyle(.orange)
+        }
+        .padding(.top, 4)
+        .padding(.bottom, 6)
     }
 
     private var footerSection: some View {

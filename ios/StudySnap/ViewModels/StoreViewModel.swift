@@ -6,7 +6,9 @@ import RevenueCat
 @MainActor
 class StoreViewModel {
     var offerings: Offerings?
-    var isPremium = false
+    var subscriptionPremium = false
+    var lifetimePremium = false
+    var isPremium: Bool { subscriptionPremium || lifetimePremium }
     var isLoading = false
     var isPurchasing = false
     var error: String?
@@ -20,6 +22,7 @@ class StoreViewModel {
     let freeDailyLimit: TimeInterval = 1 * 3600
 
     private var hasStarted = false
+    private let promoCodes = PromoCodeService()
 
     init() {
         refreshConfigured()
@@ -171,8 +174,19 @@ class StoreViewModel {
 
     private func updatePremiumStatus(from info: CustomerInfo) {
         let entitlement = info.entitlements[entitlementID]
-        isPremium = entitlement?.isActive == true
+        subscriptionPremium = entitlement?.isActive == true
         subscriptionExpirationDate = entitlement?.expirationDate
         willRenew = entitlement?.willRenew == true
+    }
+
+    func refreshLifetimeStatus(userId: String) async {
+        guard !userId.isEmpty else { return }
+        let value = await promoCodes.getLifetimePremium(userId: userId)
+        lifetimePremium = value
+    }
+
+    func redeemPromoCode(_ code: String, userId: String) async throws {
+        try await promoCodes.redeem(code: code, userId: userId)
+        lifetimePremium = true
     }
 }

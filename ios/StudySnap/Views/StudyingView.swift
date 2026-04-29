@@ -117,7 +117,7 @@ struct StudyingView: View {
                 }
             }
         }) {
-            StudySnapPaywallView(store: store, dailyUsedTime: todayShootingTime + elapsedTime)
+            StudySnapPaywallView(store: store, dailyUsedTime: todayShootingTime + elapsedTime, userId: dataStore?.currentUser?.id)
                 .interactiveDismissDisabled()
         }
         .confirmationDialog("勉強を終了しますか？", isPresented: $showStopConfirm, titleVisibility: .visible) {

@@ -63,6 +63,7 @@ struct ContentView: View {
             )
             isConfigured = true
             store.startIfNeeded()
+            await store.refreshLifetimeStatus(userId: credentials.userId)
         }
         .onChange(of: authService.isAuthenticated) { _, newValue in
             if !newValue {
