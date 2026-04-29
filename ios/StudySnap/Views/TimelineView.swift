@@ -393,12 +393,12 @@ struct TimelineView: View {
 
     private var headerBackgroundGradient: some View {
         ZStack {
-            Color(red: 1.0, green: 0.985, blue: 0.92)
+            Color(red: 0.86, green: 0.92, blue: 0.99)
             LinearGradient(
                 colors: [
-                    Color(red: 1.0, green: 0.93, blue: 0.6).opacity(0.55),
-                    Color(red: 1.0, green: 0.96, blue: 0.78).opacity(0.4),
-                    Color(red: 1.0, green: 0.98, blue: 0.88).opacity(0.25)
+                    Color(red: 0.62, green: 0.78, blue: 0.97).opacity(0.55),
+                    Color(red: 0.74, green: 0.86, blue: 0.99).opacity(0.4),
+                    Color(red: 0.86, green: 0.93, blue: 1.0).opacity(0.25)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -407,7 +407,7 @@ struct TimelineView: View {
     }
 
     private var unifiedHeader: some View {
-        VStack(spacing: -8) {
+        VStack(spacing: 2) {
             HStack(alignment: .center, spacing: 12) {
                 Button {
                     showGroupDetail = true
@@ -483,10 +483,10 @@ struct TimelineView: View {
                     }
                 )
                 .padding(.horizontal, 12)
-                .padding(.top, -16)
+                .padding(.top, -2)
             }
         }
-        .padding(.top, -2)
+        .padding(.top, -8)
         .padding(.bottom, 0)
         .frame(maxWidth: .infinity)
         .background {
