@@ -395,26 +395,26 @@ struct TimelineView: View {
         ZStack {
             Color(uiColor: UIColor { trait in
                 trait.userInterfaceStyle == .dark
-                    ? UIColor(red: 0.11, green: 0.18, blue: 0.30, alpha: 1.0)
-                    : UIColor(red: 0.74, green: 0.85, blue: 0.97, alpha: 1.0)
+                    ? UIColor(red: 0.10, green: 0.16, blue: 0.26, alpha: 1.0)
+                    : UIColor(red: 0.86, green: 0.92, blue: 0.99, alpha: 1.0)
             })
             LinearGradient(
                 colors: [
                     Color(uiColor: UIColor { trait in
                         trait.userInterfaceStyle == .dark
-                            ? UIColor(red: 0.24, green: 0.42, blue: 0.70, alpha: 1.0)
-                            : UIColor(red: 0.50, green: 0.70, blue: 0.95, alpha: 1.0)
-                    }).opacity(0.65),
+                            ? UIColor(red: 0.20, green: 0.36, blue: 0.62, alpha: 1.0)
+                            : UIColor(red: 0.62, green: 0.78, blue: 0.97, alpha: 1.0)
+                    }).opacity(0.55),
                     Color(uiColor: UIColor { trait in
                         trait.userInterfaceStyle == .dark
-                            ? UIColor(red: 0.18, green: 0.32, blue: 0.56, alpha: 1.0)
-                            : UIColor(red: 0.62, green: 0.80, blue: 0.97, alpha: 1.0)
-                    }).opacity(0.5),
+                            ? UIColor(red: 0.16, green: 0.28, blue: 0.50, alpha: 1.0)
+                            : UIColor(red: 0.74, green: 0.86, blue: 0.99, alpha: 1.0)
+                    }).opacity(0.4),
                     Color(uiColor: UIColor { trait in
                         trait.userInterfaceStyle == .dark
-                            ? UIColor(red: 0.13, green: 0.22, blue: 0.40, alpha: 1.0)
-                            : UIColor(red: 0.74, green: 0.88, blue: 0.99, alpha: 1.0)
-                    }).opacity(0.35)
+                            ? UIColor(red: 0.12, green: 0.20, blue: 0.36, alpha: 1.0)
+                            : UIColor(red: 0.86, green: 0.93, blue: 1.0, alpha: 1.0)
+                    }).opacity(0.25)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -423,7 +423,7 @@ struct TimelineView: View {
     }
 
     private var unifiedHeader: some View {
-        VStack(spacing: -20) {
+        VStack(spacing: -14) {
             HStack(alignment: .center, spacing: 12) {
                 Button {
                     showGroupDetail = true
@@ -500,10 +500,10 @@ struct TimelineView: View {
                     }
                 )
                 .padding(.horizontal, 12)
-                .padding(.top, -4)
+                .padding(.top, -2)
             }
         }
-        .padding(.top, -28)
+        .padding(.top, -18)
         .padding(.bottom, 0)
         .frame(maxWidth: .infinity)
         .background {
