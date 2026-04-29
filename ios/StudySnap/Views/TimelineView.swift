@@ -383,22 +383,80 @@ struct TimelineView: View {
         }
     }
 
+    private var studyingCount: Int {
+        dataStore.studyingMemberIds.count
+    }
+
+    private var memberCount: Int {
+        dataStore.groupMembers.count
+    }
+
     private var unifiedHeader: some View {
-        VStack(spacing: 2) {
-            Button {
-                showGroupDetail = true
-            } label: {
-                HStack(spacing: 4) {
-                    Text(dataStore.currentGroup?.name ?? "タイムライン")
-                        .font(.title3.bold())
-                        .foregroundStyle(.primary)
-                    Image(systemName: "chevron.right")
-                        .font(.caption.bold())
-                        .foregroundStyle(.secondary)
+        VStack(spacing: 10) {
+            HStack(alignment: .center, spacing: 12) {
+                Button {
+                    showGroupDetail = true
+                } label: {
+                    HStack(spacing: 10) {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.blue, .cyan],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 34, height: 34)
+                                .shadow(color: .blue.opacity(0.25), radius: 4, x: 0, y: 2)
+                            Image(systemName: "person.3.fill")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+
+                        VStack(alignment: .leading, spacing: 1) {
+                            HStack(spacing: 4) {
+                                Text(dataStore.currentGroup?.name ?? "タイムライン")
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                    .lineLimit(1)
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.tertiary)
+                            }
+
+                            if memberCount > 0 {
+                                HStack(spacing: 5) {
+                                    Text("メンバー\(memberCount)人")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+
+                                    if studyingCount > 0 {
+                                        Text("・")
+                                            .font(.caption2)
+                                            .foregroundStyle(.tertiary)
+
+                                        HStack(spacing: 3) {
+                                            Circle()
+                                                .fill(Color.red)
+                                                .frame(width: 6, height: 6)
+                                            Text("\(studyingCount)人が勉強中")
+                                                .font(.caption2.weight(.semibold))
+                                                .foregroundStyle(.red)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
+                .buttonStyle(.plain)
+
+                Spacer(minLength: 0)
+
+                startStudyHeaderButton
             }
-            .buttonStyle(.plain)
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 16)
 
             if !dataStore.groupMembers.isEmpty {
                 MembersStatusRowView(
@@ -409,18 +467,34 @@ struct TimelineView: View {
                         selectedMember = member
                     }
                 )
+                .padding(.horizontal, 12)
             }
         }
-        .padding(.horizontal)
-        .padding(.top, 2)
-        .padding(.bottom, 2)
+        .padding(.top, 6)
+        .padding(.bottom, 8)
         .frame(maxWidth: .infinity)
-        .background(Color(.systemGroupedBackground))
-        .overlay(alignment: .trailing) {
-            startStudyHeaderButton
-                .padding(.trailing, 14)
+        .background(
+            ZStack {
+                Color(.systemGroupedBackground)
+                LinearGradient(
+                    colors: [
+                        Color.blue.opacity(0.10),
+                        Color.cyan.opacity(0.05),
+                        Color.clear
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            }
+        )
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.primary.opacity(0.06))
+                .frame(height: 0.5)
         }
     }
+
+    @State private var startButtonPulse: Bool = false
 
     @ViewBuilder
     private var startStudyHeaderButton: some View {
@@ -432,13 +506,26 @@ struct TimelineView: View {
                     Circle()
                         .fill(
                             LinearGradient(
+                                colors: [.blue.opacity(0.35), .cyan.opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 64, height: 64)
+                        .scaleEffect(startButtonPulse ? 1.0 : 0.85)
+                        .opacity(startButtonPulse ? 0.0 : 0.9)
+
+                    Circle()
+                        .fill(
+                            LinearGradient(
                                 colors: [.blue, .cyan],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .frame(width: 52, height: 52)
-                        .shadow(color: .blue.opacity(0.35), radius: 6, x: 0, y: 3)
+                        .shadow(color: .blue.opacity(0.4), radius: 8, x: 0, y: 4)
+
                     Image(systemName: "play.fill")
                         .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(.white)
@@ -446,23 +533,35 @@ struct TimelineView: View {
                 }
             }
             .buttonStyle(.plain)
+            .sensoryFeedback(.impact(weight: .medium), trigger: showPreview)
             .accessibilityLabel("勉強を始める")
+            .onAppear {
+                withAnimation(.easeOut(duration: 1.6).repeatForever(autoreverses: false)) {
+                    startButtonPulse = true
+                }
+            }
         } else {
             Button {
                 showPaywall = true
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color(.systemGray3))
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(red: 0.95, green: 0.75, blue: 0.25), Color(red: 0.85, green: 0.55, blue: 0.15)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                         .frame(width: 52, height: 52)
-                        .shadow(color: .black.opacity(0.15), radius: 5, x: 0, y: 2)
-                    Image(systemName: "lock.fill")
+                        .shadow(color: Color.orange.opacity(0.35), radius: 6, x: 0, y: 3)
+                    Image(systemName: "crown.fill")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(.white)
                 }
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("今日の無料枠を使い切りました")
+            .accessibilityLabel("プランをアップグレード")
         }
     }
 
