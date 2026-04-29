@@ -57,7 +57,7 @@ struct PromoCodeRedemptionView: View {
             }
 
             VStack(spacing: 8) {
-                TextField("XPROMO2026", text: $code)
+                TextField("", text: $code)
                     .focused($isFocused)
                     .textInputAutocapitalization(.characters)
                     .autocorrectionDisabled()

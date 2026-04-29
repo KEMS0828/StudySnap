@@ -528,7 +528,7 @@ struct SettingsView: View {
                 Text(deleteError ?? "")
             }
             .sheet(isPresented: $showPaywall) {
-                StudySnapPaywallView(store: store, dailyUsedTime: dataStore.todayTotalUsedTime)
+                StudySnapPaywallView(store: store, dailyUsedTime: dataStore.todayTotalUsedTime, userId: dataStore.currentUser?.id)
             }
             .sheet(isPresented: $showCustomerCenter) {
                 SubscriptionManagementView(store: store)

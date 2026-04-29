@@ -75,7 +75,7 @@ struct TimelineView: View {
                 draftEditSheet
             }
             .sheet(isPresented: $showPaywall) {
-                StudySnapPaywallView(store: store, dailyUsedTime: dataStore.todayTotalUsedTime)
+                StudySnapPaywallView(store: store, dailyUsedTime: dataStore.todayTotalUsedTime, userId: dataStore.currentUser?.id)
             }
             .alert("投稿に失敗しました", isPresented: $showUploadError) {
                 Button("OK", role: .cancel) { dataStore.uploadError = nil }
