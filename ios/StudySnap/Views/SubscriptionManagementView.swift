@@ -25,7 +25,11 @@ struct SubscriptionManagementView: View {
                             Text("StudySnap Pro")
                                 .font(.headline)
 
-                            if store.isPremium {
+                            if store.lifetimePremium && !store.subscriptionPremium {
+                                Text("プロモコード適用中")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            } else if store.isPremium {
                                 if let expDate = store.subscriptionExpirationDate {
                                     Text(store.willRenew ? "次回更新: \(expDate.formatted(date: .abbreviated, time: .omitted))" : "有効期限: \(expDate.formatted(date: .abbreviated, time: .omitted))")
                                         .font(.caption)
@@ -44,6 +48,19 @@ struct SubscriptionManagementView: View {
                             .foregroundStyle(.green)
                     }
                     .padding(.vertical, 4)
+                }
+
+                if store.lifetimePremium && !store.subscriptionPremium {
+                    Section {
+                        HStack(alignment: .top, spacing: 10) {
+                            Image(systemName: "info.circle.fill")
+                                .foregroundStyle(.blue)
+                            Text("プロモコードでProが有効になっているため、Appleの設定にサブスクリプションは表示されません。支払いや更新の手続きは不要です。")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 4)
+                    }
                 }
 
                 Section {
