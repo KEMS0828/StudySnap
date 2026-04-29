@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct EditGroupView: View {
     let dataStore: DataStore
@@ -111,22 +112,52 @@ struct GroupPhotoEditPicker: View {
     let existingPhotoUrl: String?
     var size: CGFloat = 80
 
+    @State private var selectedItem: PhotosPickerItem?
+
     var body: some View {
-        ZStack(alignment: .bottomTrailing) {
-            if photoData != nil {
-                GroupPhotoPickerView(photoData: $photoData, size: size)
-            } else if let urlString = existingPhotoUrl, let url = URL(string: urlString) {
+        if photoData == nil, let urlString = existingPhotoUrl, let url = URL(string: urlString) {
+            PhotosPicker(selection: $selectedItem, matching: .images) {
                 ZStack(alignment: .bottomTrailing) {
                     CachedImageView(url: url)
                         .frame(width: size, height: size)
                         .clipShape(.rect(cornerRadius: size * 0.2))
-                    GroupPhotoPickerView(photoData: $photoData, size: size)
-                        .opacity(0.01)
-                        .frame(width: size, height: size)
+                        .allowsHitTesting(false)
+
+                    Circle()
+                        .fill(.indigo)
+                        .frame(width: size * 0.3, height: size * 0.3)
+                        .overlay {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: size * 0.13))
+                                .foregroundStyle(.white)
+                        }
+                        .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
+                        .allowsHitTesting(false)
                 }
-            } else {
-                GroupPhotoPickerView(photoData: $photoData, size: size)
             }
+            .buttonStyle(.plain)
+            .onChange(of: selectedItem) { _, newItem in
+                guard let newItem else { return }
+                Task {
+                    if let data = try? await newItem.loadTransferable(type: Data.self),
+                       let uiImage = UIImage(data: data) {
+                        photoData = compressImage(uiImage)
+                    }
+                }
+            }
+        } else {
+            GroupPhotoPickerView(photoData: $photoData, size: size)
         }
+    }
+
+    private func compressImage(_ image: UIImage) -> Data? {
+        let maxDimension: CGFloat = 400
+        let scale = min(maxDimension / image.size.width, maxDimension / image.size.height, 1.0)
+        let newSize = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let renderer = UIGraphicsImageRenderer(size: newSize)
+        let resized = renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+        return resized.jpegData(compressionQuality: 0.7)
     }
 }

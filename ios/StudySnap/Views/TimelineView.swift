@@ -429,20 +429,29 @@ struct TimelineView: View {
                     showGroupDetail = true
                 } label: {
                     HStack(spacing: 10) {
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.blue, .cyan],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 30, height: 30)
-                                .shadow(color: .blue.opacity(0.25), radius: 4, x: 0, y: 2)
-                            Image(systemName: "person.3.fill")
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundStyle(.white)
+                        Group {
+                            if let urlString = dataStore.currentGroup?.groupPhotoUrl, let url = URL(string: urlString) {
+                                CachedImageView(url: url)
+                                    .frame(width: 30, height: 30)
+                                    .clipShape(Circle())
+                                    .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                            } else {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [.blue, .cyan],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 30, height: 30)
+                                        .shadow(color: .blue.opacity(0.25), radius: 4, x: 0, y: 2)
+                                    Image(systemName: "person.3.fill")
+                                        .font(.system(size: 13, weight: .bold))
+                                        .foregroundStyle(.white)
+                                }
+                            }
                         }
 
                         VStack(alignment: .leading, spacing: 1) {
