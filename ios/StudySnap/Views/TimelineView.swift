@@ -393,12 +393,28 @@ struct TimelineView: View {
 
     private var headerBackgroundGradient: some View {
         ZStack {
-            Color(red: 0.86, green: 0.92, blue: 0.99)
+            Color(uiColor: UIColor { trait in
+                trait.userInterfaceStyle == .dark
+                    ? UIColor(red: 0.10, green: 0.16, blue: 0.26, alpha: 1.0)
+                    : UIColor(red: 0.86, green: 0.92, blue: 0.99, alpha: 1.0)
+            })
             LinearGradient(
                 colors: [
-                    Color(red: 0.62, green: 0.78, blue: 0.97).opacity(0.55),
-                    Color(red: 0.74, green: 0.86, blue: 0.99).opacity(0.4),
-                    Color(red: 0.86, green: 0.93, blue: 1.0).opacity(0.25)
+                    Color(uiColor: UIColor { trait in
+                        trait.userInterfaceStyle == .dark
+                            ? UIColor(red: 0.20, green: 0.36, blue: 0.62, alpha: 1.0)
+                            : UIColor(red: 0.62, green: 0.78, blue: 0.97, alpha: 1.0)
+                    }).opacity(0.55),
+                    Color(uiColor: UIColor { trait in
+                        trait.userInterfaceStyle == .dark
+                            ? UIColor(red: 0.16, green: 0.28, blue: 0.50, alpha: 1.0)
+                            : UIColor(red: 0.74, green: 0.86, blue: 0.99, alpha: 1.0)
+                    }).opacity(0.4),
+                    Color(uiColor: UIColor { trait in
+                        trait.userInterfaceStyle == .dark
+                            ? UIColor(red: 0.12, green: 0.20, blue: 0.36, alpha: 1.0)
+                            : UIColor(red: 0.86, green: 0.93, blue: 1.0, alpha: 1.0)
+                    }).opacity(0.25)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
