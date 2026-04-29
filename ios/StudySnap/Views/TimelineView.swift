@@ -470,7 +470,7 @@ struct TimelineView: View {
                 Spacer(minLength: 0)
 
                 startStudyHeaderButton
-                    .offset(y: 20)
+                    .offset(y: 18)
             }
             .padding(.horizontal, 16)
 
