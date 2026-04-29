@@ -115,38 +115,60 @@ struct GroupPhotoEditPicker: View {
     @State private var selectedItem: PhotosPickerItem?
 
     var body: some View {
-        if photoData == nil, let urlString = existingPhotoUrl, let url = URL(string: urlString) {
-            PhotosPicker(selection: $selectedItem, matching: .images) {
-                ZStack(alignment: .bottomTrailing) {
-                    CachedImageView(url: url)
-                        .frame(width: size, height: size)
-                        .clipShape(.rect(cornerRadius: size * 0.2))
-                        .allowsHitTesting(false)
+        PhotosPicker(selection: $selectedItem, matching: .images) {
+            ZStack(alignment: .bottomTrailing) {
+                photoContent
 
-                    Circle()
-                        .fill(.indigo)
-                        .frame(width: size * 0.3, height: size * 0.3)
-                        .overlay {
-                            Image(systemName: "camera.fill")
-                                .font(.system(size: size * 0.13))
-                                .foregroundStyle(.white)
-                        }
-                        .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
-                        .allowsHitTesting(false)
-                }
-            }
-            .buttonStyle(.plain)
-            .onChange(of: selectedItem) { _, newItem in
-                guard let newItem else { return }
-                Task {
-                    if let data = try? await newItem.loadTransferable(type: Data.self),
-                       let uiImage = UIImage(data: data) {
-                        photoData = compressImage(uiImage)
+                Circle()
+                    .fill(.indigo)
+                    .frame(width: size * 0.3, height: size * 0.3)
+                    .overlay {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: size * 0.13))
+                            .foregroundStyle(.white)
                     }
+                    .shadow(color: .black.opacity(0.15), radius: 2, y: 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .onChange(of: selectedItem) { _, newItem in
+            guard let newItem else { return }
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: data) {
+                    photoData = compressImage(uiImage)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var photoContent: some View {
+        if let photoData, let uiImage = UIImage(data: photoData) {
+            Image(uiImage: uiImage)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: size, height: size)
+                .clipShape(.rect(cornerRadius: size * 0.2))
+        } else if let urlString = existingPhotoUrl, let url = URL(string: urlString) {
+            CachedImageView(url: url)
+                .frame(width: size, height: size)
+                .clipShape(.rect(cornerRadius: size * 0.2))
         } else {
-            GroupPhotoPickerView(photoData: $photoData, size: size)
+            RoundedRectangle(cornerRadius: size * 0.2)
+                .fill(
+                    LinearGradient(
+                        colors: [.blue.opacity(0.4), .purple.opacity(0.4)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: size, height: size)
+                .overlay {
+                    Image(systemName: "person.3.fill")
+                        .font(.system(size: size * 0.3))
+                        .foregroundStyle(.white.opacity(0.8))
+                }
         }
     }
 
