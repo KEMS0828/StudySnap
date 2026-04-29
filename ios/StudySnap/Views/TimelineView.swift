@@ -298,7 +298,7 @@ struct TimelineView: View {
                 draftCard
                     .padding(.horizontal)
                     .padding(.bottom, 8)
-                    .background(Color(.secondarySystemBackground))
+                    .background(Color(.systemGroupedBackground))
             }
 
             ScrollViewReader { proxy in
@@ -376,7 +376,7 @@ struct TimelineView: View {
                 .onTapGesture {
                     chatInputFocused = false
                 }
-                .background(Color(.secondarySystemBackground))
+                .background(Color(.systemGroupedBackground))
             }
 
             chatInputBar
