@@ -470,6 +470,7 @@ struct TimelineView: View {
                 Spacer(minLength: 0)
 
                 startStudyHeaderButton
+             　　　　　　 .padding(.top, 6)
             }
             .padding(.horizontal, 16)
 
@@ -518,7 +519,7 @@ struct TimelineView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 64, height: 64)
+                        .frame(width: 72, height: 72)
                         .scaleEffect(startButtonPulse ? 1.0 : 0.85)
                         .opacity(startButtonPulse ? 0.0 : 0.9)
 
@@ -530,11 +531,11 @@ struct TimelineView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 52, height: 52)
+                        .frame(width: 58, height: 58)
                         .shadow(color: .blue.opacity(0.4), radius: 8, x: 0, y: 4)
 
                     Image(systemName: "play.fill")
-                        .font(.system(size: 22, weight: .bold))
+                        .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(.white)
                         .offset(x: 2)
                 }
@@ -560,10 +561,10 @@ struct TimelineView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 52, height: 52)
+                        .frame(width: 58, height: 58)
                         .shadow(color: Color.orange.opacity(0.35), radius: 6, x: 0, y: 3)
                     Image(systemName: "crown.fill")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 22, weight: .bold))
                         .foregroundStyle(.white)
                 }
             }
