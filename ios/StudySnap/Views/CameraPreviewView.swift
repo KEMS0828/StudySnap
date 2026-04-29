@@ -65,15 +65,17 @@ struct CameraPreviewView: View {
                             onStart()
                         } label: {
                             Text("勉強開始")
-                                .font(.subheadline.weight(.bold))
+                                .font(.headline.weight(.bold))
                                 .foregroundStyle(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 12)
+                                .padding(.vertical, 16)
                                 .background(.blue, in: .rect(cornerRadius: 12))
                         }
                     }
                 }
-                .padding(20)
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                .padding(.bottom, 8)
             }
         }
         .background(Color.black)
