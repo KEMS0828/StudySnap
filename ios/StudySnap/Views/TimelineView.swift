@@ -433,11 +433,11 @@ struct TimelineView: View {
                             if let urlString = dataStore.currentGroup?.groupPhotoUrl, let url = URL(string: urlString) {
                                 CachedImageView(url: url)
                                     .frame(width: 30, height: 30)
-                                    .clipShape(Circle())
+                                    .clipShape(.rect(cornerRadius: 6))
                                     .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
                             } else {
                                 ZStack {
-                                    Circle()
+                                    RoundedRectangle(cornerRadius: 6)
                                         .fill(
                                             LinearGradient(
                                                 colors: [.blue, .cyan],
