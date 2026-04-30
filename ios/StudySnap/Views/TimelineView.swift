@@ -547,6 +547,7 @@ struct TimelineView: View {
                         .frame(width: 64, height: 64)
                         .scaleEffect(startButtonPulse ? 1.0 : 0.85)
                         .opacity(startButtonPulse ? 0.0 : 0.9)
+                        .allowsHitTesting(false)
 
                     Circle()
                         .fill(
@@ -564,6 +565,8 @@ struct TimelineView: View {
                         .foregroundStyle(.white)
                         .offset(x: 2)
                 }
+                .frame(width: 64, height: 64)
+                .contentShape(Circle())
             }
             .buttonStyle(.plain)
             .sensoryFeedback(.impact(weight: .medium), trigger: showPreview)
