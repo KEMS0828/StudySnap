@@ -23,19 +23,27 @@ class DataStore {
     private var currentAuthUserId: String?
     private static let presenceStaleThreshold: TimeInterval = 60
 
-    private static let draftKey = "StudySnap_Draft"
+    private static let legacyDraftKey = "StudySnap_Draft"
+    private static let draftKeyPrefix = "StudySnap_Draft_"
 
     var hasDraft: Bool = false
 
+    private var draftKey: String? {
+        guard let id = currentAuthUserId, !id.isEmpty else { return nil }
+        return DataStore.draftKeyPrefix + id
+    }
+
     func saveDraft(_ draft: DraftData) {
+        guard let key = draftKey else { return }
         if let data = try? JSONEncoder().encode(draft) {
-            UserDefaults.standard.set(data, forKey: DataStore.draftKey)
+            UserDefaults.standard.set(data, forKey: key)
             hasDraft = true
         }
     }
 
     func loadDraft() -> DraftData? {
-        guard let data = UserDefaults.standard.data(forKey: DataStore.draftKey) else { return nil }
+        guard let key = draftKey else { return nil }
+        guard let data = UserDefaults.standard.data(forKey: key) else { return nil }
         guard let draft = try? JSONDecoder().decode(DraftData.self, from: data) else { return nil }
         if Date.now.timeIntervalSince(draft.savedAt) > 86400 {
             deleteDraft()
@@ -45,12 +53,18 @@ class DataStore {
     }
 
     func deleteDraft() {
-        UserDefaults.standard.removeObject(forKey: DataStore.draftKey)
+        guard let key = draftKey else {
+            hasDraft = false
+            return
+        }
+        UserDefaults.standard.removeObject(forKey: key)
         hasDraft = false
     }
 
     func cleanupExpiredDraft() {
-        guard let data = UserDefaults.standard.data(forKey: DataStore.draftKey),
+        migrateLegacyDraftIfNeeded()
+        guard let key = draftKey,
+              let data = UserDefaults.standard.data(forKey: key),
               let draft = try? JSONDecoder().decode(DraftData.self, from: data) else {
             hasDraft = false
             return
@@ -60,6 +74,16 @@ class DataStore {
         } else {
             hasDraft = true
         }
+    }
+
+    private func migrateLegacyDraftIfNeeded() {
+        guard let key = draftKey else { return }
+        let defaults = UserDefaults.standard
+        guard let legacyData = defaults.data(forKey: DataStore.legacyDraftKey) else { return }
+        if defaults.data(forKey: key) == nil {
+            defaults.set(legacyData, forKey: key)
+        }
+        defaults.removeObject(forKey: DataStore.legacyDraftKey)
     }
 
     func configure(authUserId: String, displayName: String?) {
@@ -1115,6 +1139,7 @@ class DataStore {
 
     private func clearAllLocalData() {
         deleteDraft()
+        UserDefaults.standard.removeObject(forKey: DataStore.legacyDraftKey)
         UserDefaults.standard.removeObject(forKey: "customSubjects")
         UserDefaults.standard.removeObject(forKey: "subjectColors")
         UserDefaults.standard.removeObject(forKey: "studyReminderEnabled")
