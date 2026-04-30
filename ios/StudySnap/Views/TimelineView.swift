@@ -496,8 +496,10 @@ struct TimelineView: View {
 
                 startStudyHeaderButton
                     .offset(y: 18)
+                    .zIndex(10)
             }
             .padding(.horizontal, 16)
+            .zIndex(10)
 
             if !dataStore.groupMembers.isEmpty {
                 MembersStatusRowView(
