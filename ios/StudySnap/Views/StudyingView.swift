@@ -77,6 +77,9 @@ struct StudyingView: View {
                         pause()
                     }
                 }
+                saveInProgressDraft()
+            } else if newPhase == .active {
+                dataStore?.deleteDraft()
             }
         }
         .onChange(of: cameraService.capturedPhotos.count) { _, newCount in
@@ -419,6 +422,27 @@ struct StudyingView: View {
         stopTimer()
         closeMiniPreviewIfNeeded()
         cameraService.stopCapturing()
+        dataStore?.deleteDraft()
         onFinish(finalTime)
+    }
+
+    private func saveInProgressDraft() {
+        guard let dataStore else { return }
+        let currentElapsed: TimeInterval = isPaused
+            ? accumulatedTime
+            : accumulatedTime + Date.now.timeIntervalSince(startTime)
+        let photos = cameraService.capturedPhotos
+        guard currentElapsed >= 1 || photos.count >= 1 else { return }
+        let draft = DraftData(
+            subject: "",
+            reflection: "",
+            duration: currentElapsed,
+            capturedPhotos: photos,
+            editedPhotos: [],
+            modeRawValue: mode.rawValue,
+            savedAt: .now,
+            editablePhotos: nil
+        )
+        dataStore.saveDraft(draft)
     }
 }
