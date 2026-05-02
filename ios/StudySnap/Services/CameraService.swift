@@ -1,10 +1,12 @@
 import AVFoundation
 import UIKit
 import CoreMotion
+import CoreImage
 
 @Observable
 class CameraService: NSObject {
     static let maxPhotosPerSession = 15
+    static let outdoorModeStorageKey = "outdoorModeEnabled"
     var capturedPhotos: [Data] = []
     var isRunning = false
     var isPaused = false
@@ -16,6 +18,9 @@ class CameraService: NSObject {
 
     private var captureSession: AVCaptureSession?
     private var photoOutput: AVCapturePhotoOutput?
+    private var videoDataOutput: AVCaptureVideoDataOutput?
+    private let videoQueue = DispatchQueue(label: "cameraVideoQueue")
+    private var pendingSilentCapture = false
     private let sessionQueue = DispatchQueue(label: "cameraSessionQueue")
     private var captureTimer: Timer?
     private var currentMode: StudyMode = .normal
@@ -87,15 +92,26 @@ class CameraService: NSObject {
             session.addOutput(output)
         }
 
+        let videoOutput = AVCaptureVideoDataOutput()
+        videoOutput.alwaysDiscardsLateVideoFrames = true
+        videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: Int(kCVPixelFormatType_32BGRA)]
+        if session.canAddOutput(videoOutput) {
+            session.addOutput(videoOutput)
+        }
+
         session.commitConfiguration()
 
         let configuredSession = session
         let configuredOutput = output
+        let configuredVideoOutput = videoOutput
         Task { @MainActor [weak self] in
-            self?.captureSession = configuredSession
-            self?.photoOutput = configuredOutput
-            self?.previewSession = configuredSession
-            self?.isSessionConfigured = true
+            guard let self else { return }
+            configuredVideoOutput.setSampleBufferDelegate(self, queue: self.videoQueue)
+            self.captureSession = configuredSession
+            self.photoOutput = configuredOutput
+            self.videoDataOutput = configuredVideoOutput
+            self.previewSession = configuredSession
+            self.isSessionConfigured = true
         }
     }
 
@@ -201,9 +217,30 @@ class CameraService: NSObject {
 
     private func capturePhoto() {
         guard !isSimulator else { return }
-        guard let session = captureSession, let output = photoOutput else { return }
-        let delegate = self
+        guard let session = captureSession else { return }
+        let isOutdoorMode = UserDefaults.standard.bool(forKey: Self.outdoorModeStorageKey)
         let rotationAngle = currentVideoRotationAngle
+
+        if isOutdoorMode, let videoOutput = videoDataOutput {
+            sessionQueue.async { [weak self] in
+                guard let self else { return }
+                if !session.isRunning {
+                    session.startRunning()
+                }
+                Thread.sleep(forTimeInterval: 0.5)
+                if let connection = videoOutput.connection(with: .video),
+                   connection.isVideoRotationAngleSupported(rotationAngle) {
+                    connection.videoRotationAngle = rotationAngle
+                }
+                Task { @MainActor [weak self] in
+                    self?.pendingSilentCapture = true
+                }
+            }
+            return
+        }
+
+        guard let output = photoOutput else { return }
+        let delegate = self
         sessionQueue.async {
             session.startRunning()
             Thread.sleep(forTimeInterval: 0.5)
@@ -269,6 +306,27 @@ class CameraService: NSObject {
         sessionQueue.async {
             if session.isRunning {
                 session.stopRunning()
+            }
+        }
+    }
+}
+
+extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
+    nonisolated func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        Task { @MainActor [weak self] in
+            guard let self, self.pendingSilentCapture else { return }
+            self.pendingSilentCapture = false
+            guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+            let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+            let context = CIContext()
+            guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else { return }
+            let uiImage = UIImage(cgImage: cgImage)
+            guard let data = uiImage.jpegData(compressionQuality: 0.9) else { return }
+            self.capturedPhotos.append(data)
+            self.stopSessionAfterCapture()
+            if self.capturedPhotos.count >= Self.maxPhotosPerSession {
+                self.didReachPhotoLimit = true
+                self.stopCapturing()
             }
         }
     }

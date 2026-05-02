@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ModeSelectionView: View {
     @State private var localSelectedMode: StudyMode?
+    @AppStorage("outdoorModeEnabled") private var outdoorModeEnabled: Bool = false
     @Binding var isPresented: Bool
     var onStart: (StudyMode) -> Void
 
@@ -11,6 +12,7 @@ struct ModeSelectionView: View {
                 VStack(spacing: 16) {
                     headerSection
                     modesSection
+                    outdoorModeSection
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 100)
@@ -50,6 +52,43 @@ struct ModeSelectionView: View {
                 mode: mode,
                 isSelected: localSelectedMode == mode,
                 onSelect: { localSelectedMode = mode }
+            )
+        }
+    }
+
+    private var outdoorModeSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("外出時モード")
+                .font(.headline)
+                .padding(.top, 12)
+                .padding(.horizontal, 4)
+
+            HStack(spacing: 16) {
+                Image(systemName: "figure.walk.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(outdoorModeEnabled ? .white : Color.accentColor)
+                    .frame(width: 48, height: 48)
+                    .background(outdoorModeEnabled ? Color.accentColor : Color(.tertiarySystemBackground), in: .rect(cornerRadius: 12))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("外出時モード")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text("カフェや電車など、周囲に配慮したい場所で静かに撮影します")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 8)
+
+                Toggle("", isOn: $outdoorModeEnabled)
+                    .labelsHidden()
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.secondarySystemGroupedBackground))
             )
         }
     }
