@@ -30,6 +30,16 @@ final class NotificationService {
         }
     }
 
+    private(set) var currentStreak: Int = 0
+
+    func updateStreak(_ streak: Int) {
+        let changed = streak != currentStreak
+        currentStreak = streak
+        if changed && isReminderEnabled {
+            scheduleReminder()
+        }
+    }
+
     private init() {
         isReminderEnabled = UserDefaults.standard.bool(forKey: "studyReminderEnabled")
         let savedTime = UserDefaults.standard.double(forKey: "studyReminderTime")
@@ -58,7 +68,11 @@ final class NotificationService {
 
         let content = UNMutableNotificationContent()
         content.title = "StudySnap"
-        content.body = "今日も勉強しましょう！📚"
+        if currentStreak > 0 {
+            content.body = "現在 \(currentStreak)日連続で勉強中！🔥 今日も続けましょう📚"
+        } else {
+            content.body = "今日から新しい連続記録を始めましょう！📚"
+        }
         content.sound = .default
 
         let calendar = Calendar.current

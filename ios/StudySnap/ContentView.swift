@@ -85,7 +85,11 @@ struct ContentView: View {
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active && isConfigured {
                 dataStore.refreshTimeline()
+                NotificationService.shared.updateStreak(dataStore.currentStreak)
             }
+        }
+        .onChange(of: dataStore.currentStreak) { _, newValue in
+            NotificationService.shared.updateStreak(newValue)
         }
         .alert("エラー", isPresented: Binding(
             get: { dataStore.generalError != nil },
