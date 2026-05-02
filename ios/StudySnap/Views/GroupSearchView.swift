@@ -13,6 +13,8 @@ struct GroupSearchView: View {
         return dataStore.allGroups.filter { $0.name.localizedStandardContains(searchText) }
     }
 
+    @FocusState private var isSearchFocused: Bool
+
     var body: some View {
         ScrollView {
                 VStack(spacing: 24) {
@@ -63,6 +65,9 @@ struct GroupSearchView: View {
                             Image(systemName: "magnifyingglass")
                                 .foregroundStyle(.secondary)
                             TextField("グループ名で検索", text: $searchText)
+                                .focused($isSearchFocused)
+                                .submitLabel(.done)
+                                .onSubmit { isSearchFocused = false }
                         }
                         .padding(12)
                         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 12))
@@ -93,7 +98,12 @@ struct GroupSearchView: View {
                     }
                 }
                 .padding(.horizontal)
+                .padding(.bottom, 24)
             }
+        .background(Color(.systemGroupedBackground))
+        .scrollDismissesKeyboard(.immediately)
+        .contentShape(Rectangle())
+        .onTapGesture { isSearchFocused = false }
         .navigationDestination(for: String.self) { groupId in
             if let group = filteredGroups.first(where: { $0.id == groupId }) ?? dataStore.allGroups.first(where: { $0.id == groupId }) {
                 GroupDetailView(group: group, dataStore: dataStore)
