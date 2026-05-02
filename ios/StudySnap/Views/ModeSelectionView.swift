@@ -12,7 +12,6 @@ struct ModeSelectionView: View {
                 VStack(spacing: 16) {
                     headerSection
                     modesSection
-                    outdoorModeSection
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 100)
@@ -47,49 +46,28 @@ struct ModeSelectionView: View {
     }
 
     private var modesSection: some View {
-        ForEach(StudyMode.allCases) { mode in
-            ModeCardView(
-                mode: mode,
-                isSelected: localSelectedMode == mode,
-                onSelect: { localSelectedMode = mode }
-            )
-        }
-    }
+        VStack(spacing: 12) {
+            ForEach(StudyMode.allCases) { mode in
+                VStack(spacing: 8) {
+                    ModeCardView(
+                        mode: mode,
+                        isSelected: localSelectedMode == mode,
+                        onSelect: {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                                localSelectedMode = (localSelectedMode == mode) ? nil : mode
+                            }
+                        }
+                    )
 
-    private var outdoorModeSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("外出時モード")
-                .font(.headline)
-                .padding(.top, 12)
-                .padding(.horizontal, 4)
-
-            HStack(spacing: 16) {
-                Image(systemName: "figure.walk.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(outdoorModeEnabled ? .white : Color.accentColor)
-                    .frame(width: 48, height: 48)
-                    .background(outdoorModeEnabled ? Color.accentColor : Color(.tertiarySystemBackground), in: .rect(cornerRadius: 12))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("外出時モード")
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                    Text("カフェや電車など、周囲に配慮したい場所で静かに撮影します")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if localSelectedMode == mode {
+                        OutdoorToggleCard(isOn: $outdoorModeEnabled)
+                            .transition(.asymmetric(
+                                insertion: .opacity.combined(with: .move(edge: .top)).combined(with: .scale(scale: 0.96, anchor: .top)),
+                                removal: .opacity.combined(with: .move(edge: .top))
+                            ))
+                    }
                 }
-
-                Spacer(minLength: 8)
-
-                Toggle("", isOn: $outdoorModeEnabled)
-                    .labelsHidden()
             }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(.secondarySystemGroupedBackground))
-            )
         }
     }
 
@@ -108,6 +86,43 @@ struct ModeSelectionView: View {
         .disabled(localSelectedMode == nil)
         .padding()
         .background(.bar)
+    }
+}
+
+struct OutdoorToggleCard: View {
+    @Binding var isOn: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "figure.walk.circle.fill")
+                .font(.title3)
+                .foregroundStyle(isOn ? .white : Color.accentColor)
+                .frame(width: 36, height: 36)
+                .background(isOn ? Color.accentColor : Color(.tertiarySystemBackground), in: .rect(cornerRadius: 10))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("外出時モード")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Text("カフェや図書館など、周囲に配慮したい場所でおすすめ")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 4)
+
+            Toggle("", isOn: $isOn)
+                .labelsHidden()
+                .scaleEffect(0.85)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.secondarySystemGroupedBackground))
+        )
+        .padding(.horizontal, 12)
     }
 }
 
