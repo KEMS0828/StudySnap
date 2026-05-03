@@ -31,12 +31,11 @@
 <img width="200" height="..." alt="IMG_0289" src="https://github.com/user-attachments/assets/355c2086-baf8-463a-85c9-80eeedda7fc6" />
 <img width="200" height="..." alt="IMG_0290" src="https://github.com/user-attachments/assets/dde1c8de-5231-4f2f-a94f-fe7ba4ec94b3" />
 <img width="200" height="..." alt="IMG_0288" src="https://github.com/user-attachments/assets/354f566d-6d7d-4865-9246-bca7e28bbd8f" />
-<img width="200" height="..." alt="IMG_0352" src="https://github.com/user-attachments/assets/257fa7bc-2c38-40de-bf1a-1b0149ca10a4" />
-<img width="200" height="..." alt="IMG_0354" src="https://github.com/user-attachments/assets/3351c017-b3bf-456d-baa8-81916185807c" />
-<img width="200" height="..." alt="IMG_0356" src="https://github.com/user-attachments/assets/5d7a1c91-173e-420e-bfc8-46439c9ee33b" />
-<img width="200" height="..." alt="IMG_0622" src="https://github.com/user-attachments/assets/95e83394-808c-4ee5-af45-a36d182b79b5" />
-<img width="200" height="..." alt="IMG_0621" src="https://github.com/user-attachments/assets/3af626d0-eb5b-4000-a584-3ef3c014c98f" />
 <img width="200" height="..." alt="IMG_0620" src="https://github.com/user-attachments/assets/6fc4a0ef-4281-47d5-a1c2-7ca9e73f4fa4" />
+<img width="200" height="..." alt="IMG_0621" src="https://github.com/user-attachments/assets/3af626d0-eb5b-4000-a584-3ef3c014c98f" />
+<img width="200" height="..." alt="IMG_0622" src="https://github.com/user-attachments/assets/95e83394-808c-4ee5-af45-a36d182b79b5" />
+
+
 ## Tech
 - Swift
 - Firebase
