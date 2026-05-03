@@ -27,7 +27,6 @@
   
 ## アプリ画面
 <img width="200" height="..." alt="IMG_0596" src="https://github.com/user-attachments/assets/40ba3ea8-a2a5-4912-a280-01e74d4652e9" />
-<img width="200" height="..." alt="IMG_0293" src="https://github.com/user-attachments/assets/09527058-acd9-4d11-b4b4-2d7febe8426e" />
 <img width="200" height="..." alt="IMG_0289" src="https://github.com/user-attachments/assets/355c2086-baf8-463a-85c9-80eeedda7fc6" />
 <img width="200" height="..." alt="IMG_0290" src="https://github.com/user-attachments/assets/dde1c8de-5231-4f2f-a94f-fe7ba4ec94b3" />
 <img width="200" height="..." alt="IMG_0288" src="https://github.com/user-attachments/assets/354f566d-6d7d-4865-9246-bca7e28bbd8f" />
