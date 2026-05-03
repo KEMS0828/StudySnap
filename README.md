@@ -14,15 +14,16 @@
 
 ## 特徴
 - ランダム撮影でサボれない
-- 写真をグループメンバーが承認
-- 勉強時間を自動記録
-- 努力を可視化
+- 常に撮影ではなく、ユーザが認知できないランダムな一部分を切り取ることにより、常に適度な緊張感を与える
+- 撮影された写真は加工できるので、個人情報は漏れない
+- 投稿したを写真をグループメンバーが承認することで、勉強時間が加算される
+- 加算された勉強時間は、レポート画面に自動記録・グラフ化
 
 ## 強み
 - 「本当にやったか」を証明できる仕組み
 - ランダム撮影 × 他人承認による強制力のある設計
-- 「ちょうどいい周りの目」で自然に集中できるUI
-- 撮影直前にカメラを起動することで超省電力化
+- 「ちょうどいい周りの目」で自然と集中できる
+- 撮影直前にカメラを起動することで省電力化
 - 個人情報に配慮した設計
   
 ## アプリ画面
@@ -33,7 +34,9 @@
 <img width="200" height="..." alt="IMG_0352" src="https://github.com/user-attachments/assets/257fa7bc-2c38-40de-bf1a-1b0149ca10a4" />
 <img width="200" height="..." alt="IMG_0354" src="https://github.com/user-attachments/assets/3351c017-b3bf-456d-baa8-81916185807c" />
 <img width="200" height="..." alt="IMG_0356" src="https://github.com/user-attachments/assets/5d7a1c91-173e-420e-bfc8-46439c9ee33b" />
-
+<img width="200" height="..." alt="IMG_0622" src="https://github.com/user-attachments/assets/95e83394-808c-4ee5-af45-a36d182b79b5" />
+<img width="200" height="..." alt="IMG_0621" src="https://github.com/user-attachments/assets/3af626d0-eb5b-4000-a584-3ef3c014c98f" />
+<img width="200" height="..." alt="IMG_0620" src="https://github.com/user-attachments/assets/6fc4a0ef-4281-47d5-a1c2-7ca9e73f4fa4" />
 ## Tech
 - Swift
 - Firebase
